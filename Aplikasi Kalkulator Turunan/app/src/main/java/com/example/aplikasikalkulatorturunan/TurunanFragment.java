@@ -507,11 +507,18 @@ public class TurunanFragment extends Fragment {
         xAxis.setGridColor(0xFFE5E7EB);
         xAxis.setAxisLineColor(0xFF111827);
         xAxis.setTextColor(0xFF6B7280);
+        xAxis.setAxisMinimum(0f); // Mulai sumbu X dari 0 sesuai permintaan user
 
         lineChart.getAxisLeft().setDrawGridLines(true);
         lineChart.getAxisLeft().setGridColor(0xFFE5E7EB);
         lineChart.getAxisLeft().setAxisLineColor(0xFF111827);
         lineChart.getAxisLeft().setTextColor(0xFF6B7280);
+        
+        // Buat garis Y=0 jadi lebih jelas
+        lineChart.getAxisLeft().setDrawZeroLine(true);
+        lineChart.getAxisLeft().setZeroLineColor(0xFF111827);
+        lineChart.getAxisLeft().setZeroLineWidth(1.5f);
+        
         lineChart.getAxisRight().setEnabled(false);
 
         // Tombol zoom
@@ -529,10 +536,10 @@ public class TurunanFragment extends Fragment {
         String fBase = normalizeExpr(fxExpr);
         String dfBase = normalizeExpr(dfxExpr);
 
-        for (int xi = -60; xi <= 60; xi++) {
+        // Ubah range xi dari 0 agar grafik "mulai dari 0" sesuai permintaan
+        for (int xi = 0; xi <= 100; xi++) {
             double x = xi / 10.0;
-            // Gunakan string pengganti yang aman: jika x negatif, bungkus kurung
-            String xStr = (x < 0) ? "(" + x + ")" : String.valueOf(x);
+            String xStr = String.valueOf(x);
 
             try {
                 // f(x)
