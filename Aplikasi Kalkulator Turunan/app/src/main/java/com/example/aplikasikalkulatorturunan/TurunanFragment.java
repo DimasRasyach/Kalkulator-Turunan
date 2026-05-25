@@ -1,18 +1,12 @@
-// BiasaFragment.java
-// Ganti "com.example.kalkulatorturunan" dengan package name project kamu
-
 package com.example.aplikasikalkulatorturunan;
 
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.WindowInsets;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
-import android.widget.ImageView;
-import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -20,7 +14,10 @@ import androidx.annotation.Nullable;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
+import androidx.core.widget.NestedScrollView;
 import androidx.fragment.app.Fragment;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
 import com.github.mikephil.charting.charts.LineChart;
 import com.github.mikephil.charting.components.XAxis;
@@ -29,21 +26,26 @@ import com.github.mikephil.charting.data.LineData;
 import com.github.mikephil.charting.data.LineDataSet;
 
 import java.util.ArrayList;
+import java.util.List;
 
 public class TurunanFragment extends Fragment {
 
-    private EditText inputFunction;
-    private TextView txtHasil, txtHasilAkhir;
-    private Button btnHitung, btnHitungBottom;
-    private ImageButton btnClear;
-    private LineChart lineChart;
-    private LinearLayout rootLayout;
+    // Views
+    private EditText         inputFunction;
+    private TextView         txtHasil;
+    private Button           btnHitungBottom;
+    private ImageButton      btnClear;
+    private LineChart        lineChart;
+    private NestedScrollView nestedScrollView;
+    private View             keyboardPanel;
 
-    private LinearLayout[] stepHeaders  = new LinearLayout[4];
-    private TextView[]     stepDetails  = new TextView[4];
-    private ImageView[]    stepArrows   = new ImageView[4];
-    private boolean[]      stepExpanded = {false, false, false, false};
+    // RecyclerView langkah
+    private RecyclerView rvSteps;
+    private StepAdapter  stepAdapter;
 
+    // =========================================================
+    // Lifecycle
+    // =========================================================
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater,
@@ -57,42 +59,27 @@ public class TurunanFragment extends Fragment {
         super.onViewCreated(view, savedInstanceState);
 
         bindViews(view);
-        fixSystemWindowInsets(view);
-        setupStepAccordion();
+        setupRecyclerView();
+        setupKeyboardSticky();
+        setupSystemInsets(view);
         setupKeyboard(view);
         setupChart(view);
         setupButtons();
     }
 
     // =========================================================
-    // BIND
+    // Bind views
     // =========================================================
     private void bindViews(View view) {
-        inputFunction   = view.findViewById(R.id.inputFunction);
-        txtHasil        = view.findViewById(R.id.txtHasil);
-        txtHasilAkhir   = view.findViewById(R.id.txtHasilAkhir);
-        btnHitung       = view.findViewById(R.id.btnHitung);
-        btnHitungBottom = view.findViewById(R.id.btnHitungBottom);
-        btnClear        = view.findViewById(R.id.btnClear);
-        lineChart       = view.findViewById(R.id.lineChart);
-        rootLayout      = view.findViewById(R.id.rootLinearLayout);
+        inputFunction    = view.findViewById(R.id.inputFunction);
+        txtHasil         = view.findViewById(R.id.txtHasil);
+        btnHitungBottom  = view.findViewById(R.id.btnHitungBottom);
+        btnClear         = view.findViewById(R.id.btnClear);
+        lineChart        = view.findViewById(R.id.lineChart);
+        nestedScrollView = view.findViewById(R.id.nestedScrollView);
+        keyboardPanel    = view.findViewById(R.id.keyboardPanel);
+        rvSteps          = view.findViewById(R.id.rvSteps);
 
-        stepHeaders[0] = view.findViewById(R.id.step1Header);
-        stepHeaders[1] = view.findViewById(R.id.step2Header);
-        stepHeaders[2] = view.findViewById(R.id.step3Header);
-        stepHeaders[3] = view.findViewById(R.id.step4Header);
-
-        stepDetails[0] = view.findViewById(R.id.step1Detail);
-        stepDetails[1] = view.findViewById(R.id.step2Detail);
-        stepDetails[2] = view.findViewById(R.id.step3Detail);
-        stepDetails[3] = view.findViewById(R.id.step4Detail);
-
-        stepArrows[0] = view.findViewById(R.id.step1Arrow);
-        stepArrows[1] = view.findViewById(R.id.step2Arrow);
-        stepArrows[2] = view.findViewById(R.id.step3Arrow);
-        stepArrows[3] = view.findViewById(R.id.step4Arrow);
-
-        // EditText bisa dilihat & discroll horizontal
         inputFunction.setFocusable(true);
         inputFunction.setFocusableInTouchMode(true);
         inputFunction.setHorizontallyScrolling(true);
@@ -100,49 +87,64 @@ public class TurunanFragment extends Fragment {
     }
 
     // =========================================================
-    // FIX: keyboard tidak ketimpah navbar HP
+    // RecyclerView setup
     // =========================================================
-    private void fixSystemWindowInsets(View view) {
+    private void setupRecyclerView() {
+        stepAdapter = new StepAdapter();
+        rvSteps.setAdapter(stepAdapter);
+        rvSteps.setLayoutManager(new LinearLayoutManager(requireContext()));
+        rvSteps.setNestedScrollingEnabled(false);
+    }
+
+    // =========================================================
+    // Keyboard sticky: beri padding bawah pada NestedScrollView
+    // supaya konten tidak tertutup panel keyboard
+    // =========================================================
+    private void setupKeyboardSticky() {
+        if (keyboardPanel != null) {
+            keyboardPanel.post(() -> {
+                int kbHeight = keyboardPanel.getHeight();
+                nestedScrollView.setPadding(
+                        nestedScrollView.getPaddingLeft(),
+                        nestedScrollView.getPaddingTop(),
+                        nestedScrollView.getPaddingRight(),
+                        kbHeight
+                );
+            });
+        }
+    }
+
+    // =========================================================
+    // System insets — hindari gesture bar HP
+    // =========================================================
+    private void setupSystemInsets(View view) {
         ViewCompat.setOnApplyWindowInsetsListener(view, (v, insets) -> {
             Insets navInsets = insets.getInsets(WindowInsetsCompat.Type.navigationBars());
-            if (rootLayout != null) {
-                rootLayout.setPadding(
-                        rootLayout.getPaddingLeft(),
-                        rootLayout.getPaddingTop(),
-                        rootLayout.getPaddingRight(),
-                        navInsets.bottom + 16
+            if (keyboardPanel != null) {
+                keyboardPanel.setPadding(
+                        keyboardPanel.getPaddingLeft(),
+                        keyboardPanel.getPaddingTop(),
+                        keyboardPanel.getPaddingRight(),
+                        navInsets.bottom
                 );
+                keyboardPanel.post(() -> {
+                    int kbHeight = keyboardPanel.getHeight();
+                    nestedScrollView.setPadding(
+                            nestedScrollView.getPaddingLeft(),
+                            nestedScrollView.getPaddingTop(),
+                            nestedScrollView.getPaddingRight(),
+                            kbHeight
+                    );
+                });
             }
             return insets;
         });
     }
 
     // =========================================================
-    // ACCORDION
-    // =========================================================
-    private void setupStepAccordion() {
-        for (int i = 0; i < 4; i++) {
-            final int idx = i;
-            if (stepHeaders[i] != null) {
-                stepHeaders[i].setOnClickListener(v -> {
-                    stepExpanded[idx] = !stepExpanded[idx];
-                    if (stepDetails[idx] != null)
-                        stepDetails[idx].setVisibility(stepExpanded[idx] ? View.VISIBLE : View.GONE);
-                    if (stepArrows[idx] != null)
-                        stepArrows[idx].setRotation(stepExpanded[idx] ? 180f : 0f);
-                });
-            }
-        }
-    }
-
-    // =========================================================
-    // KEYBOARD
-    // Simbol yang tampil di input sudah diperbaiki:
-    //   sqrt( → √(    *  → ×    ^2 → ²   dll
+    // Keyboard
     // =========================================================
     private void setupKeyboard(View view) {
-
-        // { id tombol, teks yang diappend ke input }
         int[]    ids  = {
                 R.id.btnSin, R.id.btnCos, R.id.btnTan, R.id.btnLn,  R.id.btnLog,
                 R.id.btnSqrt, R.id.btnSquare, R.id.btnPow, R.id.btnPi, R.id.btnE,
@@ -168,7 +170,7 @@ public class TurunanFragment extends Fragment {
             if (btn != null) btn.setOnClickListener(v -> appendToInput(val));
         }
 
-        // Tombol = → evaluasi ekspresi
+        // Tombol =
         Button btnEquals = view.findViewById(R.id.btnEquals);
         if (btnEquals != null) btnEquals.setOnClickListener(v -> evaluasiEkspresi());
 
@@ -186,14 +188,7 @@ public class TurunanFragment extends Fragment {
 
         // AC
         Button btnAC = view.findViewById(R.id.btnAC);
-        if (btnAC != null) btnAC.setOnClickListener(v -> {
-            inputFunction.setText("");
-            txtHasil.setText("");
-            txtHasilAkhir.setText("");
-            lineChart.clear();
-            lineChart.invalidate();
-            resetSteps();
-        });
+        if (btnAC != null) btnAC.setOnClickListener(v -> resetAll());
 
         // Clear X
         btnClear.setOnClickListener(v -> inputFunction.setText(""));
@@ -201,39 +196,21 @@ public class TurunanFragment extends Fragment {
 
     private void appendToInput(String text) {
         String cur = inputFunction.getText().toString();
-        int pos = inputFunction.getSelectionStart();
+        int pos    = inputFunction.getSelectionStart();
         if (pos < 0) pos = cur.length();
         String newText = cur.substring(0, pos) + text + cur.substring(pos);
         inputFunction.setText(newText);
         inputFunction.setSelection(pos + text.length());
     }
 
-    // =========================================================
-    // EVALUASI EKSPRESI UMUM (bukan hanya turunan)
-    // Mendukung: +, -, ×/*, ÷//, ^, √(), sin, cos, tan, ln, log, π, e
-    // =========================================================
-    private void evaluasiEkspresi() {
-        String raw = inputFunction.getText().toString().trim();
-        if (raw.isEmpty()) return;
-        try {
-            double hasil = eval(normalizeExpr(raw));
-            String hasilStr = formatHasil(hasil);
-            txtHasil.setText("= " + hasilStr);
-            txtHasilAkhir.setText("= " + hasilStr);
-            resetSteps();
-        } catch (Exception e) {
-            txtHasil.setText("Error");
-            txtHasilAkhir.setText("Error");
+    private void setupButtons() {
+        if (btnHitungBottom != null) {
+            btnHitungBottom.setOnClickListener(v -> hitungTurunan());
         }
     }
 
-    private void setupButtons() {
-        btnHitung.setOnClickListener(v -> hitungTurunan());
-        btnHitungBottom.setOnClickListener(v -> hitungTurunan());
-    }
-
     // =========================================================
-    // HITUNG TURUNAN (polinomial sederhana)
+    // Hitung turunan
     // =========================================================
     private void hitungTurunan() {
         String input = inputFunction.getText().toString().trim();
@@ -242,13 +219,14 @@ public class TurunanFragment extends Fragment {
         try {
             String hasil = turunkanPolinomial(input);
             txtHasil.setText("f'(x) = " + hasil);
-            txtHasilAkhir.setText("f'(x) = " + hasil);
+
+            // Update langkah via RecyclerView
             updateSteps(input, hasil);
-            
-            // Format ulang hasil untuk evaluasi grafik (hilangkan f'(x) =)
+
+            // Grafik
             plotGrafik(input, hasil);
 
-            // Update legend
+            // Legend
             View v = getView();
             if (v != null) {
                 TextView lFx  = v.findViewById(R.id.legendFx);
@@ -256,35 +234,93 @@ public class TurunanFragment extends Fragment {
                 if (lFx  != null) lFx.setText("f(x) = "  + input);
                 if (lDfx != null) lDfx.setText("f'(x) = " + hasil);
             }
+
+            // Scroll ke bagian langkah
+            nestedScrollView.post(() ->
+                    nestedScrollView.smoothScrollTo(0, rvSteps.getTop())
+            );
+
         } catch (Exception e) {
             txtHasil.setText("f'(x) = Error");
-            txtHasilAkhir.setText("Error");
         }
     }
 
     // =========================================================
-    // TURUNAN POLINOMIAL
-    // Mendukung: ax^n, ax, a (konstanta), penjumlahan/pengurangan suku
+    // Evaluasi ekspresi numerik
+    // =========================================================
+    private void evaluasiEkspresi() {
+        String raw = inputFunction.getText().toString().trim();
+        if (raw.isEmpty()) return;
+        try {
+            double hasil    = eval(normalizeExpr(raw));
+            String hasilStr = formatHasil(hasil);
+            txtHasil.setText("= " + hasilStr);
+            stepAdapter.submitList(new ArrayList<>());
+        } catch (Exception e) {
+            txtHasil.setText("Error");
+        }
+    }
+
+    // =========================================================
+    // Reset
+    // =========================================================
+    private void resetAll() {
+        inputFunction.setText("");
+        txtHasil.setText("");
+        lineChart.clear();
+        lineChart.invalidate();
+        stepAdapter.submitList(new ArrayList<>());
+
+        View v = getView();
+        if (v != null) {
+            View legend = v.findViewById(R.id.chartLegend);
+            if (legend != null) legend.setVisibility(View.GONE);
+        }
+    }
+
+    // =========================================================
+    // Update langkah
+    // =========================================================
+    private void updateSteps(String input, String hasil) {
+        List<Stepmodel> steps = new ArrayList<>();
+        steps.add(new Stepmodel(1,
+                "Identifikasi fungsi",
+                "Analisis",
+                "Fungsi yang diinputkan: f(x) = " + input));
+        steps.add(new Stepmodel(2,
+                "Gunakan aturan turunan",
+                "Aturan Pangkat",
+                "d/dx(xⁿ) = nxⁿ⁻¹, d/dx(ax) = a, d/dx(c) = 0"));
+        steps.add(new Stepmodel(3,
+                "Turunkan tiap suku",
+                "Proses",
+                "Turunkan setiap suku satu per satu sesuai aturan"));
+        steps.add(new Stepmodel(4,
+                "Hasil akhir",
+                "Selesai",
+                "f'(x) = " + hasil));
+
+        stepAdapter.submitList(steps);
+    }
+
+    // =========================================================
+    // MATH ENGINE
     // =========================================================
     private String turunkanPolinomial(String expr) {
-        // Normalisasi: hilangkan spasi, ganti simbol tampilan → simbol kalkulasi
         String e = expr.replaceAll("\\s+", "")
                 .replace("×", "*")
                 .replace("÷", "/")
                 .replace("²", "^2")
                 .replace("π", String.valueOf(Math.PI));
 
-        // Pisah per suku (split +/-)
-        // Tambah + di depan jika suku pertama positif agar mudah di-split
         if (!e.startsWith("-") && !e.startsWith("+")) e = "+" + e;
         
-        java.util.List<String> sukuList = new ArrayList<>();
-        java.util.List<String> tandaList = new ArrayList<>();
+        List<String> sukuList = new ArrayList<>();
+        List<String> tandaList = new ArrayList<>();
         
         int start = 0;
         for (int i = 1; i < e.length(); i++) {
             char c = e.charAt(i);
-            // Cari + atau - yang bukan merupakan bagian dari eksponen (setelah ^)
             if ((c == '+' || c == '-') && e.charAt(i-1) != '^') {
                 tandaList.add(String.valueOf(e.charAt(start)));
                 sukuList.add(e.substring(start + 1, i));
@@ -307,28 +343,22 @@ public class TurunanFragment extends Fragment {
         return hasil.length() == 0 ? "0" : hasil.toString();
     }
 
-    // Turunkan satu suku: sgn adalah "+" atau "-"
     private String turunkanSuku(String suku, String sgn) {
         double sign = sgn.equals("-") ? -1 : 1;
         suku = suku.trim();
         if (suku.isEmpty()) return null;
 
-        // Bentuk ax^n
         if (suku.contains("x^")) {
             String[] parts = suku.split("x\\^");
             double koef = parseKoef(parts[0]) * sign;
             double exp  = Double.parseDouble(parts[1]);
-            double newKoef = koef * exp;
-            double newExp  = exp - 1;
-            return formatSuku(newKoef, newExp);
+            return formatSuku(koef * exp, exp - 1);
         }
-        // Bentuk ax (pangkat 1)
         if (suku.contains("x")) {
             String kStr = suku.replace("x", "").replace("*", "");
             double koef = parseKoef(kStr) * sign;
             return formatDouble(koef);
         }
-        // Konstanta
         return null;
     }
 
@@ -336,13 +366,8 @@ public class TurunanFragment extends Fragment {
         s = s.trim();
         if (s.isEmpty() || s.equals("+")) return 1.0;
         if (s.equals("-")) return -1.0;
-        // Hapus tanda perkalian jika ada, misal "3*"
         if (s.endsWith("*")) s = s.substring(0, s.length() - 1);
-        try {
-            return Double.parseDouble(s);
-        } catch (Exception e) {
-            return 1.0;
-        }
+        try { return Double.parseDouble(s); } catch (Exception e) { return 1.0; }
     }
 
     private String formatSuku(double koef, double exp) {
@@ -364,13 +389,9 @@ public class TurunanFragment extends Fragment {
         if (Double.isInfinite(d)) return d > 0 ? "∞" : "-∞";
         if (d == Math.floor(d) && !Double.isInfinite(d))
             return String.valueOf((long) d);
-        // Bulatkan 10 desimal
         return String.format("%.10f", d).replaceAll("0+$","").replaceAll("\\.$","");
     }
 
-    // =========================================================
-    // EVALUASI EKSPRESI NUMERIK
-    // =========================================================
     private String normalizeExpr(String e) {
         return e.replace("×", "*")
                 .replace("÷", "/")
@@ -385,17 +406,13 @@ public class TurunanFragment extends Fragment {
     private double eval(String expr) {
         return new Object() {
             int pos = -1, ch;
-
             void nextChar() { ch = (++pos < expr.length()) ? expr.charAt(pos) : -1; }
-
             boolean eat(int charToEat) {
                 while (ch == ' ') nextChar();
                 if (ch == charToEat) { nextChar(); return true; }
                 return false;
             }
-
             double parse() { nextChar(); double v = parseExpr(); if (pos < expr.length()) throw new RuntimeException("Unexpected: " + (char)ch); return v; }
-
             double parseExpr() {
                 double v = parseTerm();
                 for (;;) {
@@ -404,7 +421,6 @@ public class TurunanFragment extends Fragment {
                     else return v;
                 }
             }
-
             double parseTerm() {
                 double v = parseFactor();
                 for (;;) {
@@ -413,7 +429,6 @@ public class TurunanFragment extends Fragment {
                     else return v;
                 }
             }
-
             double parseFactor() {
                 if (eat('+')) return +parseFactor();
                 if (eat('-')) return -parseFactor();
@@ -422,8 +437,7 @@ public class TurunanFragment extends Fragment {
                 if (eat('(')) { v = parseExpr(); eat(')'); }
                 else if ((ch >= '0' && ch <= '9') || ch == '.') {
                     while ((ch >= '0' && ch <= '9') || ch == '.') nextChar();
-                    String numStr = expr.substring(startPos, this.pos);
-                    v = Double.parseDouble(numStr);
+                    v = Double.parseDouble(expr.substring(startPos, this.pos));
                 } else if (ch >= 'a' && ch <= 'z') {
                     while (ch >= 'a' && ch <= 'z') nextChar();
                     String fn = expr.substring(startPos, this.pos);
@@ -446,51 +460,6 @@ public class TurunanFragment extends Fragment {
     }
 
     // =========================================================
-    // UPDATE LANGKAH PENYELESAIAN
-    // =========================================================
-    private void updateSteps(String input, String hasil) {
-        String[] labels  = {"Identifikasi fungsi", "Gunakan aturan turunan", "Turunkan tiap suku", "Sederhanakan"};
-        String[] details = {
-                "Fungsi yang diinputkan: f(x) = " + input,
-                "Gunakan aturan: d/dx(xⁿ) = nxⁿ⁻¹, d/dx(ax) = a, d/dx(c) = 0",
-                "Turunkan setiap suku satu per satu",
-                "Hasil turunan: f'(x) = " + hasil
-        };
-
-        View v = getView();
-        if (v == null) return;
-
-        int[] headerIds = {R.id.step1Header, R.id.step2Header, R.id.step3Header, R.id.step4Header};
-        int[] detailIds = {R.id.step1Detail, R.id.step2Detail, R.id.step3Detail, R.id.step4Detail};
-
-        for (int i = 0; i < 4; i++) {
-            LinearLayout header = v.findViewById(headerIds[i]);
-            TextView     detail = v.findViewById(detailIds[i]);
-            if (header != null) {
-                // TextView kedua di header = label
-                TextView lbl = (TextView) header.getChildAt(1);
-                if (lbl != null) lbl.setText(labels[i]);
-            }
-            if (detail != null) detail.setText(details[i]);
-        }
-    }
-
-    private void resetSteps() {
-        View v = getView();
-        if (v == null) return;
-        int[] headerIds = {R.id.step1Header, R.id.step2Header, R.id.step3Header, R.id.step4Header};
-        int[] detailIds = {R.id.step1Detail, R.id.step2Detail, R.id.step3Detail, R.id.step4Detail};
-        for (int i = 0; i < 4; i++) {
-            LinearLayout header = v.findViewById(headerIds[i]);
-            TextView detail = v.findViewById(detailIds[i]);
-            if (header != null) { TextView lbl = (TextView) header.getChildAt(1); if (lbl != null) lbl.setText(""); }
-            if (detail != null) { detail.setText(""); detail.setVisibility(View.GONE); }
-            stepExpanded[i] = false;
-            if (stepArrows[i] != null) stepArrows[i].setRotation(0f);
-        }
-    }
-
-    // =========================================================
     // GRAFIK
     // =========================================================
     private void setupChart(View view) {
@@ -507,21 +476,17 @@ public class TurunanFragment extends Fragment {
         xAxis.setGridColor(0xFFE5E7EB);
         xAxis.setAxisLineColor(0xFF111827);
         xAxis.setTextColor(0xFF6B7280);
-        xAxis.setAxisMinimum(0f); // Mulai sumbu X dari 0 sesuai permintaan user
+        xAxis.setAxisMinimum(0f); 
 
         lineChart.getAxisLeft().setDrawGridLines(true);
         lineChart.getAxisLeft().setGridColor(0xFFE5E7EB);
         lineChart.getAxisLeft().setAxisLineColor(0xFF111827);
         lineChart.getAxisLeft().setTextColor(0xFF6B7280);
-        
-        // Buat garis Y=0 jadi lebih jelas
         lineChart.getAxisLeft().setDrawZeroLine(true);
         lineChart.getAxisLeft().setZeroLineColor(0xFF111827);
         lineChart.getAxisLeft().setZeroLineWidth(1.5f);
-        
         lineChart.getAxisRight().setEnabled(false);
 
-        // Tombol zoom
         Button btnZoomIn = view.findViewById(R.id.btnZoomIn);
         Button btnZoomOut = view.findViewById(R.id.btnZoomOut);
         if (btnZoomIn  != null) btnZoomIn.setOnClickListener(v2 -> lineChart.zoomIn());
@@ -532,17 +497,14 @@ public class TurunanFragment extends Fragment {
         ArrayList<Entry> fxPts  = new ArrayList<>();
         ArrayList<Entry> dfxPts = new ArrayList<>();
 
-        // Normalisasi dasar sekali saja
         String fBase = normalizeExpr(fxExpr);
         String dfBase = normalizeExpr(dfxExpr);
 
-        // Ubah range xi dari 0 agar grafik "mulai dari 0" sesuai permintaan
         for (int xi = 0; xi <= 100; xi++) {
             double x = xi / 10.0;
             String xStr = String.valueOf(x);
 
             try {
-                // f(x)
                 String fEval = fBase.replace("x", xStr);
                 double fy = eval(fEval);
                 if (!Double.isNaN(fy) && !Double.isInfinite(fy) && Math.abs(fy) < 1000) {
@@ -551,7 +513,6 @@ public class TurunanFragment extends Fragment {
             } catch (Exception ignored) {}
 
             try {
-                // f'(x)
                 String dfEval = dfBase.replace("x", xStr);
                 double dfy = eval(dfEval);
                 if (!Double.isNaN(dfy) && !Double.isInfinite(dfy) && Math.abs(dfy) < 1000) {
@@ -568,7 +529,6 @@ public class TurunanFragment extends Fragment {
         }
 
         LineData lineData = new LineData();
-
         if (!fxPts.isEmpty()) {
             LineDataSet dsFx = new LineDataSet(fxPts, "f(x)");
             dsFx.setColor(0xFF3B6FFF);
@@ -578,7 +538,6 @@ public class TurunanFragment extends Fragment {
             dsFx.setMode(LineDataSet.Mode.CUBIC_BEZIER);
             lineData.addDataSet(dsFx);
         }
-
         if (!dfxPts.isEmpty()) {
             LineDataSet dsDfx = new LineDataSet(dfxPts, "f'(x)");
             dsDfx.setColor(0xFFFF4444);
@@ -590,12 +549,9 @@ public class TurunanFragment extends Fragment {
         }
 
         lineChart.setData(lineData);
-        lineChart.animateX(500);
-        
-        // Atur range sumbu Y agar tidak terlalu zoom out jika ada nilai ekstrim
         lineChart.getAxisLeft().setSpaceTop(10f);
         lineChart.getAxisLeft().setSpaceBottom(10f);
-        
+        lineChart.animateX(500);
         lineChart.invalidate();
 
         View v = getView();
@@ -603,9 +559,5 @@ public class TurunanFragment extends Fragment {
             View legend = v.findViewById(R.id.chartLegend);
             if (legend != null) legend.setVisibility(View.VISIBLE);
         }
-    }
-
-    private void updateChart(String fxExpr, String dfxExpr) {
-        plotGrafik(fxExpr, dfxExpr);
     }
 }
