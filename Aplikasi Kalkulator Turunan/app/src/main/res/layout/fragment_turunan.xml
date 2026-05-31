@@ -166,7 +166,7 @@
                         android:id="@+id/lineChart"
                         android:layout_width="match_parent"
                         android:layout_height="match_parent"
-                        android:layout_marginBottom="30dp"/>
+                        android:layout_marginBottom="10dp"/>
 
                     <!-- Floating controls -->
                     <LinearLayout
@@ -220,7 +220,8 @@
                         android:layout_alignParentBottom="true"
                         android:layout_centerHorizontal="true"
                         android:layout_marginBottom="6dp"
-                        android:orientation="horizontal">
+                        android:orientation="horizontal"
+                        android:visibility="gone">
 
                         <LinearLayout
                             android:layout_width="wrap_content"
@@ -238,7 +239,6 @@
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:layout_marginStart="5dp"
-                                android:text="f(x)=3x²"
                                 android:textSize="12sp"
                                 android:textStyle="bold"
                                 android:textColor="#374151"/>
@@ -261,7 +261,6 @@
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:layout_marginStart="5dp"
-                                android:text="f'(x)=6x"
                                 android:textSize="12sp"
                                 android:textStyle="bold"
                                 android:textColor="#374151"/>
