@@ -1,13 +1,360 @@
 <?xml version="1.0" encoding="utf-8"?>
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools"
+<androidx.coordinatorlayout.widget.CoordinatorLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".GrafikFragment">
+    android:background="#F0F4FF">
 
-    <!-- TODO: Update blank fragment layout -->
-    <TextView
+    <androidx.core.widget.NestedScrollView
+        android:id="@+id/nestedScrollView"
         android:layout_width="match_parent"
-        android:layout_height="match_parent" />
+        android:layout_height="match_parent"
+        android:fillViewport="true">
 
-</FrameLayout>
+        <LinearLayout
+            android:id="@+id/rootLinearLayout"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="16dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Masukkan fungsi"
+                android:textStyle="bold"
+                android:textSize="15sp"
+                android:textColor="#111827"/>
+
+            <com.google.android.material.card.MaterialCardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                app:cardCornerRadius="18dp"
+                app:cardElevation="1dp"
+                app:cardBackgroundColor="#FFFFFF"
+                app:strokeColor="#E5E7EB"
+                app:strokeWidth="1dp">
+
+                <RelativeLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:paddingStart="16dp"
+                    android:paddingEnd="8dp"
+                    android:paddingTop="12dp"
+                    android:paddingBottom="12dp">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_toStartOf="@id/btnClear"
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="f(x) = "
+                            android:textSize="20sp"
+                            android:textStyle="italic"
+                            android:textColor="#1D4FFF"/>
+
+                        <EditText
+                            android:id="@+id/inputFunction"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:background="@android:color/transparent"
+                            android:textSize="20sp"
+                            android:textColor="#111827"
+                            android:inputType="none"
+                            android:focusable="true"
+                            android:singleLine="true"
+                            android:hint="x³ − 3x + 2"
+                            android:textColorHint="#9CA3AF"/>
+                    </LinearLayout>
+
+                    <ImageButton
+                        android:id="@+id/btnClear"
+                        android:layout_width="32dp"
+                        android:layout_height="32dp"
+                        android:layout_alignParentEnd="true"
+                        android:layout_centerVertical="true"
+                        android:background="@drawable/bg_circle_gray"
+                        android:src="@drawable/ic_close"
+                        android:padding="6dp"
+                        android:contentDescription="Hapus"/>
+                </RelativeLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:text="Turunan"
+                android:textStyle="bold"
+                android:textSize="15sp"
+                android:textColor="#111827"/>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                android:orientation="horizontal">
+
+                <com.google.android.material.card.MaterialCardView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    app:cardCornerRadius="16dp"
+                    app:cardElevation="0dp"
+                    app:cardBackgroundColor="#F0F4FF"
+                    app:strokeColor="#C7D7FF"
+                    app:strokeWidth="1dp">
+
+                    <TextView
+                        android:id="@+id/txtHasilTurunan"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:padding="14dp"
+                        android:text="f′(x) = ..."
+                        android:textColor="#1D4FFF"
+                        android:textStyle="bold|italic"
+                        android:textSize="18sp"/>
+                </com.google.android.material.card.MaterialCardView>
+
+                <Button
+                    android:id="@+id/btnHitung"
+                    android:layout_width="wrap_content"
+                    android:layout_height="match_parent"
+                    android:layout_marginStart="12dp"
+                    android:backgroundTint="#1D4FFF"
+                    android:text="Hitung Turunan"
+                    android:textAllCaps="false"
+                    android:textColor="#FFFFFF"
+                    app:cornerRadius="14dp"/>
+            </LinearLayout>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="20dp"
+                android:text="Grafik Fungsi dan Turunannya"
+                android:textStyle="bold"
+                android:textSize="15sp"
+                android:textColor="#111827"/>
+
+            <com.google.android.material.card.MaterialCardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                app:cardCornerRadius="24dp"
+                app:cardElevation="2dp"
+                app:cardBackgroundColor="#FFFFFF"
+                app:strokeColor="#EEF2FF"
+                app:strokeWidth="1dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="12dp">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:layout_marginBottom="8dp">
+                        <TextView android:id="@+id/txtLegendFx" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="— f(x)" android:textColor="#1D4FFF" android:textSize="11sp" android:textStyle="bold" android:layout_marginEnd="12dp"/>
+                        <TextView android:id="@+id/txtLegendDfx" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="— f′(x)" android:textColor="#EF4444" android:textSize="11sp" android:textStyle="bold"/>
+                    </LinearLayout>
+
+                    <RelativeLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="280dp">
+                        <com.github.mikephil.charting.charts.LineChart
+                            android:id="@+id/lineChart"
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"/>
+                        <LinearLayout
+                            android:layout_width="40dp"
+                            android:layout_height="wrap_content"
+                            android:layout_alignParentEnd="true"
+                            android:layout_centerVertical="true"
+                            android:orientation="vertical">
+                            <Button android:id="@+id/btnZoomIn" android:layout_width="40dp" android:layout_height="40dp" android:text="+" android:backgroundTint="#FFFFFF" android:textColor="#4B5563" app:strokeWidth="1dp" app:strokeColor="#E5E7EB" app:cornerRadius="10dp" android:padding="0dp"/>
+                            <Button android:id="@+id/btnZoomOut" android:layout_width="40dp" android:layout_height="40dp" android:layout_marginTop="4dp" android:text="−" android:backgroundTint="#FFFFFF" android:textColor="#4B5563" app:strokeWidth="1dp" app:strokeColor="#E5E7EB" app:cornerRadius="10dp" android:padding="0dp"/>
+                            <ImageButton android:id="@+id/btnZoomReset" android:layout_width="40dp" android:layout_height="40dp" android:layout_marginTop="4dp" android:src="@drawable/ic_fullscreen" android:backgroundTint="#FFFFFF" app:strokeWidth="1dp" app:strokeColor="#E5E7EB" android:scaleType="centerInside" android:padding="8dp"/>
+                        </LinearLayout>
+                    </RelativeLayout>
+
+                    <LinearLayout
+                        android:id="@+id/containerTitikKritis"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:gravity="center"
+                        android:layout_marginTop="10dp"
+                        android:visibility="gone">
+                        <TextView android:id="@+id/txtKritis1" android:layout_width="wrap_content" android:layout_height="wrap_content" android:background="@drawable/bg_circle_green_light" android:padding="8dp" android:textSize="10sp" android:textColor="#166534" android:gravity="center" android:layout_margin="4dp"/>
+                        <TextView android:id="@+id/txtKritis2" android:layout_width="wrap_content" android:layout_height="wrap_content" android:background="@drawable/bg_circle_green_light" android:padding="8dp" android:textSize="10sp" android:textColor="#166534" android:gravity="center" android:layout_margin="4dp"/>
+                        <TextView android:id="@+id/txtKritis3" android:layout_width="wrap_content" android:layout_height="wrap_content" android:background="@drawable/bg_circle_green_light" android:padding="8dp" android:textSize="10sp" android:textColor="#166534" android:gravity="center" android:layout_margin="4dp"/>
+                    </LinearLayout>
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="20dp"
+                android:text="Informasi Grafik"
+                android:textStyle="bold"
+                android:textSize="15sp"
+                android:textColor="#111827"/>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginTop="10dp">
+                <com.google.android.material.card.MaterialCardView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:layout_marginEnd="6dp"
+                    app:cardCornerRadius="16dp"
+                    app:cardBackgroundColor="#EEF2FF">
+                    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:padding="12dp">
+                        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Fungsi" android:textStyle="bold" android:textColor="#1D4FFF" android:textSize="13sp"/>
+                        <TextView android:id="@+id/txtInfoDomain" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="• Domain: ℝ" android:textSize="11sp" android:layout_marginTop="4dp"/>
+                        <TextView android:id="@+id/txtInfoRange" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="• Range: ℝ" android:textSize="11sp"/>
+                        <TextView android:id="@+id/txtInfoSumbuX" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="• Sumbu-X: −" android:textSize="11sp"/>
+                        <TextView android:id="@+id/txtInfoSumbuY" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="• Sumbu-Y: −" android:textSize="11sp"/>
+                    </LinearLayout>
+                </com.google.android.material.card.MaterialCardView>
+                <com.google.android.material.card.MaterialCardView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    app:cardCornerRadius="16dp"
+                    app:cardBackgroundColor="#FFF5F5">
+                    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:padding="12dp">
+                        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Turunan" android:textStyle="bold" android:textColor="#EF4444" android:textSize="13sp"/>
+                        <TextView android:id="@+id/txtInfoTitikKritis" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="• Titik kritis: −" android:textSize="11sp" android:layout_marginTop="4dp"/>
+                        <TextView android:id="@+id/txtInfoNolTurunan" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="• f′(x)=0: −" android:textSize="11sp"/>
+                        <TextView android:id="@+id/txtInfoNegatif" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="• f′(x)&lt;0: −" android:textSize="11sp"/>
+                        <TextView android:id="@+id/txtInfoPositif" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="• f′(x)&gt;0: −" android:textSize="11sp"/>
+                    </LinearLayout>
+                </com.google.android.material.card.MaterialCardView>
+            </LinearLayout>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="20dp"
+                android:text="Penjelasan"
+                android:textStyle="bold"
+                android:textSize="15sp"
+                android:textColor="#111827"/>
+
+            <com.google.android.material.card.MaterialCardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                app:cardCornerRadius="20dp"
+                app:cardBackgroundColor="#FFFFFF"
+                app:strokeColor="#E5E7EB"
+                app:strokeWidth="1dp">
+                <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical">
+                    <LinearLayout android:id="@+id/rowNaik" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:clickable="true" android:focusable="true">
+                        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:padding="14dp" android:gravity="center_vertical">
+                            <TextView android:id="@+id/txtNaikDesc" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="f′(x) > 0 → fungsi naik" android:textSize="13sp" android:textColor="#374151"/>
+                            <ImageView android:id="@+id/arrowNaik" android:layout_width="20dp" android:layout_height="20dp" android:src="@drawable/ic_chevron_down"/>
+                        </LinearLayout>
+                        <TextView android:id="@+id/detailNaik" android:layout_width="match_parent" android:layout_height="wrap_content" android:paddingStart="14dp" android:paddingEnd="14dp" android:paddingBottom="12dp" android:visibility="gone" android:textSize="12sp" android:textColor="#6B7280"/>
+                    </LinearLayout>
+                    <LinearLayout android:id="@+id/rowTurun" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:clickable="true" android:focusable="true">
+                        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:padding="14dp" android:gravity="center_vertical">
+                            <TextView android:id="@+id/txtTurunDesc" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="f′(x) &lt; 0 → fungsi turun" android:textSize="13sp" android:textColor="#374151"/>
+                            <ImageView android:id="@+id/arrowTurun" android:layout_width="20dp" android:layout_height="20dp" android:src="@drawable/ic_chevron_down"/>
+                        </LinearLayout>
+                        <TextView android:id="@+id/detailTurun" android:layout_width="match_parent" android:layout_height="wrap_content" android:paddingStart="14dp" android:paddingEnd="14dp" android:paddingBottom="12dp" android:visibility="gone" android:textSize="12sp" android:textColor="#6B7280"/>
+                    </LinearLayout>
+                    <LinearLayout android:id="@+id/rowEkstrem" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:clickable="true" android:focusable="true">
+                        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:padding="14dp" android:gravity="center_vertical">
+                            <TextView android:id="@+id/txtEkstremDesc" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="Titik ekstrem" android:textSize="13sp" android:textColor="#374151" android:textStyle="bold"/>
+                            <ImageView android:id="@+id/arrowEkstrem" android:layout_width="20dp" android:layout_height="20dp" android:src="@drawable/ic_chevron_down"/>
+                        </LinearLayout>
+                        <LinearLayout android:id="@+id/detailEkstrem" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:paddingStart="14dp" android:paddingEnd="14dp" android:paddingBottom="12dp" android:visibility="gone">
+                            <TextView android:id="@+id/txtMaksimumLokal" android:layout_width="wrap_content" android:layout_height="wrap_content" android:textSize="12sp" android:textColor="#6B7280"/>
+                            <TextView android:id="@+id/txtMinimumLokal" android:layout_width="wrap_content" android:layout_height="wrap_content" android:textSize="12sp" android:textColor="#6B7280"/>
+                        </LinearLayout>
+                    </LinearLayout>
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <View android:layout_width="match_parent" android:layout_height="350dp"/>
+        </LinearLayout>
+    </androidx.core.widget.NestedScrollView>
+
+    <LinearLayout
+        android:id="@+id/keyboardPanel"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom"
+        android:orientation="vertical"
+        android:background="#FFFFFF"
+        android:elevation="8dp"
+        android:padding="12dp">
+        <LinearLayout android:id="@+id/btnHideKeyboard" android:layout_width="match_parent" android:layout_height="30dp" android:gravity="center"><View android:layout_width="40dp" android:layout_height="4dp" android:background="#D1D5DB"/></LinearLayout>
+        <!-- Rows Keyboard di sini (Gunakan style KeyboardButtonStyle Anda) -->
+        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal">
+            <Button android:id="@+id/btnSin" style="@style/KeyboardButtonStyle" android:text="sin"/>
+            <Button android:id="@+id/btnCos" style="@style/KeyboardButtonStyle" android:text="cos"/>
+            <Button android:id="@+id/btnTan" style="@style/KeyboardButtonStyle" android:text="tan"/>
+            <Button android:id="@+id/btnLn"  style="@style/KeyboardButtonStyle" android:text="ln"/>
+            <Button android:id="@+id/btnLog" style="@style/KeyboardButtonStyle" android:text="log"/>
+        </LinearLayout>
+        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:layout_marginTop="5dp">
+            <Button android:id="@+id/btnSqrt" style="@style/KeyboardButtonStyle" android:text="√x"/>
+            <Button android:id="@+id/btnSquare" style="@style/KeyboardButtonStyle" android:text="x²"/>
+            <Button android:id="@+id/btnPow" style="@style/KeyboardButtonStyle" android:text="xʸ"/>
+            <Button android:id="@+id/btnPi" style="@style/KeyboardButtonStyle" android:text="π"/>
+            <Button android:id="@+id/btnE" style="@style/KeyboardButtonStyle" android:text="e"/>
+        </LinearLayout>
+        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:layout_marginTop="5dp">
+            <Button android:id="@+id/btn7" style="@style/KeyboardButtonStyle" android:text="7"/>
+            <Button android:id="@+id/btn8" style="@style/KeyboardButtonStyle" android:text="8"/>
+            <Button android:id="@+id/btn9" style="@style/KeyboardButtonStyle" android:text="9"/>
+            <Button android:id="@+id/btnDivide" style="@style/KeyboardButtonStyle" android:text="÷"/>
+            <Button android:id="@+id/btnBackspace" style="@style/KeyboardButtonStyle" android:text="⌫"/>
+        </LinearLayout>
+        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:layout_marginTop="5dp">
+            <Button android:id="@+id/btn4" style="@style/KeyboardButtonStyle" android:text="4"/>
+            <Button android:id="@+id/btn5" style="@style/KeyboardButtonStyle" android:text="5"/>
+            <Button android:id="@+id/btn6" style="@style/KeyboardButtonStyle" android:text="6"/>
+            <Button android:id="@+id/btnMultiply" style="@style/KeyboardButtonStyle" android:text="×"/>
+            <Button android:id="@+id/btnCaret" style="@style/KeyboardButtonStyle" android:text="^"/>
+        </LinearLayout>
+        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:layout_marginTop="5dp">
+            <Button android:id="@+id/btn1" style="@style/KeyboardButtonStyle" android:text="1"/>
+            <Button android:id="@+id/btn2" style="@style/KeyboardButtonStyle" android:text="2"/>
+            <Button android:id="@+id/btn3" style="@style/KeyboardButtonStyle" android:text="3"/>
+            <Button android:id="@+id/btnMinus" style="@style/KeyboardButtonStyle" android:text="−"/>
+            <Button android:id="@+id/btnOpenParen" style="@style/KeyboardButtonStyle" android:text="("/>
+        </LinearLayout>
+        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:layout_marginTop="5dp">
+            <Button android:id="@+id/btn0" style="@style/KeyboardButtonStyle" android:text="0"/>
+            <Button android:id="@+id/btnDot" style="@style/KeyboardButtonStyle" android:text="."/>
+            <Button android:id="@+id/btnCloseParen" style="@style/KeyboardButtonStyle" android:text=")"/>
+            <Button android:id="@+id/btnPlus" style="@style/KeyboardButtonStyle" android:text="+"/>
+            <Button android:id="@+id/btnEquals" android:layout_width="0dp" android:layout_height="46dp" android:layout_weight="1" android:layout_marginStart="6dp" android:backgroundTint="#1D4FFF" android:text="=" android:textColor="#FFFFFF" android:textSize="22sp" android:textStyle="bold" app:cornerRadius="12dp"/>
+        </LinearLayout>
+        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:layout_marginTop="7dp">
+            <Button android:id="@+id/btnX" android:layout_width="0dp" android:layout_height="46dp" android:layout_weight="1" android:text="x" style="@style/KeyboardButtonStyle"/>
+            <Button android:id="@+id/btnAC" android:layout_width="0dp" android:layout_height="46dp" android:layout_weight="1" android:layout_marginStart="5dp" android:text="AC" android:textColor="#DC2626" android:backgroundTint="#FFF3F3" app:strokeColor="#FECACA"/>
+            <Button android:id="@+id/btnHitungBottom" android:layout_width="0dp" android:layout_height="46dp" android:layout_weight="3" android:layout_marginStart="5dp" android:text="Hitung Grafik" android:backgroundTint="#1D4FFF" android:textColor="#FFFFFF" app:cornerRadius="12dp"/>
+        </LinearLayout>
+    </LinearLayout>
+</androidx.coordinatorlayout.widget.CoordinatorLayout>

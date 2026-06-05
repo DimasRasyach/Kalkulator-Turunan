@@ -311,8 +311,24 @@
         android:elevation="8dp"
         android:paddingStart="12dp"
         android:paddingEnd="12dp"
-        android:paddingTop="8dp"
+        android:paddingTop="4dp"
         android:paddingBottom="12dp">
+
+        <!-- Handle untuk menutup keyboard -->
+        <LinearLayout
+            android:id="@+id/btnHideKeyboard"
+            android:layout_width="match_parent"
+            android:layout_height="30dp"
+            android:gravity="center"
+            android:clickable="true"
+            android:focusable="true"
+            android:background="?attr/selectableItemBackground">
+            <View
+                android:layout_width="40dp"
+                android:layout_height="4dp"
+                android:background="#E5E7EB"
+                android:backgroundTint="#D1D5DB"/>
+        </LinearLayout>
 
         <!-- Garis tipis pemisah -->
         <View
