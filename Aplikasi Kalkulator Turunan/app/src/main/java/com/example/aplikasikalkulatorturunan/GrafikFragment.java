@@ -1,5 +1,6 @@
 package com.example.aplikasikalkulatorturunan;
 
+import android.graphics.Color;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.view.LayoutInflater;
@@ -8,7 +9,6 @@ import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
-import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
@@ -36,13 +36,11 @@ public class GrafikFragment extends Fragment {
     private TextView txtInfoDomain, txtInfoRange, txtInfoSumbuX, txtInfoSumbuY;
     private TextView txtInfoTitikKritis, txtInfoNolTurunan, txtInfoNegatif, txtInfoPositif;
     private TextView txtKritis1, txtKritis2, txtKritis3;
-    private TextView detailNaik, detailTurun, txtNaikDesc, txtTurunDesc, txtEkstremDesc, txtMaksimumLokal, txtMinimumLokal;
-    private ImageView arrowNaik, arrowTurun, arrowEkstrem;
-    private LinearLayout containerTitikKritis, rowNaik, rowTurun, rowEkstrem, detailEkstrem, keyboardPanel;
+    private LinearLayout containerTitikKritis, keyboardPanel;
     private View btnHideKeyboard;
     private LineChart lineChart;
-    private Button btnHitung, btnHitungBottom, btnZoomIn, btnZoomOut;
-    private ImageButton btnClear, btnZoomReset;
+    private Button btnHitungBottom, btnZoomIn, btnZoomOut;
+    private ImageButton btnClear;
 
     @Nullable
     @Override
@@ -62,16 +60,21 @@ public class GrafikFragment extends Fragment {
 
     private void bindViews(View v) {
         inputFunction = v.findViewById(R.id.inputFunction);
+
+        // Mematikan keyboard bawaan sistem Android agar custom keyboard berjalan mulus
+        inputFunction.setShowSoftInputOnFocus(false);
+
         txtHasilTurunan = v.findViewById(R.id.txtHasilTurunan);
         txtLegendFx = v.findViewById(R.id.txtLegendFx);
         txtLegendDfx = v.findViewById(R.id.txtLegendDfx);
         lineChart = v.findViewById(R.id.lineChart);
-        btnHitung = v.findViewById(R.id.btnHitung);
+        btnHitungBottom = v.findViewById(v.getContext().getResources().getIdentifier("btnHitungBottom", "id", v.getContext().getPackageName()));
+        // fallback binding aman jika ada redundansi ID di setupKeyboard
         btnHitungBottom = v.findViewById(R.id.btnHitungBottom);
         btnClear = v.findViewById(R.id.btnClear);
         btnZoomIn = v.findViewById(R.id.btnZoomIn);
         btnZoomOut = v.findViewById(R.id.btnZoomOut);
-        btnZoomReset = v.findViewById(R.id.btnZoomReset);
+
         keyboardPanel = v.findViewById(R.id.keyboardPanel);
         btnHideKeyboard = v.findViewById(R.id.btnHideKeyboard);
         containerTitikKritis = v.findViewById(R.id.containerTitikKritis);
@@ -86,45 +89,52 @@ public class GrafikFragment extends Fragment {
         txtInfoNolTurunan = v.findViewById(R.id.txtInfoNolTurunan);
         txtInfoNegatif = v.findViewById(R.id.txtInfoNegatif);
         txtInfoPositif = v.findViewById(R.id.txtInfoPositif);
-        rowNaik = v.findViewById(R.id.rowNaik);
-        rowTurun = v.findViewById(R.id.rowTurun);
-        rowEkstrem = v.findViewById(R.id.rowEkstrem);
-        detailNaik = v.findViewById(R.id.detailNaik);
-        detailTurun = v.findViewById(R.id.detailTurun);
-        detailEkstrem = v.findViewById(R.id.detailEkstrem);
-        arrowNaik = v.findViewById(R.id.arrowNaik);
-        arrowTurun = v.findViewById(R.id.arrowTurun);
-        arrowEkstrem = v.findViewById(R.id.arrowEkstrem);
-        txtNaikDesc = v.findViewById(R.id.txtNaikDesc);
-        txtTurunDesc = v.findViewById(R.id.txtTurunDesc);
-        txtEkstremDesc = v.findViewById(R.id.txtEkstremDesc);
-        txtMaksimumLokal = v.findViewById(R.id.txtMaksimumLokal);
-        txtMinimumLokal = v.findViewById(R.id.txtMinimumLokal);
     }
 
     private void setupChart() {
         lineChart.getDescription().setEnabled(false);
-        lineChart.getLegend().setEnabled(false);
+        lineChart.getLegend().setEnabled(false); // Menggunakan kustom TextView legend bawaan fragment_grafik2
+        lineChart.setDrawGridBackground(false);
+        lineChart.setBackgroundColor(Color.WHITE);
+
+        lineChart.setTouchEnabled(true);
+        lineChart.setDragEnabled(true);
+        lineChart.setScaleEnabled(true);
+        lineChart.setPinchZoom(true);
+
+        lineChart.setNoDataText("Tidak Ada Grafik");
+
         XAxis xAxis = lineChart.getXAxis();
         xAxis.setPosition(XAxis.XAxisPosition.BOTTOM);
         xAxis.setDrawGridLines(true);
+        xAxis.setGridColor(Color.parseColor("#EEEEEE"));
+        xAxis.setAxisLineColor(Color.parseColor("#374151"));
+        xAxis.setAxisLineWidth(2f);
+        xAxis.setTextColor(Color.GRAY);
+        xAxis.setTextSize(11f);
+
+        YAxis leftAxis = lineChart.getAxisLeft();
+        leftAxis.setDrawGridLines(true);
+        leftAxis.setGridColor(Color.parseColor("#EEEEEE"));
+        leftAxis.setAxisLineColor(Color.parseColor("#374151"));
+        leftAxis.setAxisLineWidth(2f);
+        leftAxis.setTextColor(Color.GRAY);
+        leftAxis.setTextSize(11f);
+        leftAxis.setAxisMinimum(-20f);
+        leftAxis.setAxisMaximum(40f);
+
         lineChart.getAxisRight().setEnabled(false);
+        lineChart.setExtraOffsets(8f, 8f, 8f, 16f);
     }
 
     private void setupListeners() {
         inputFunction.setOnClickListener(v -> showKeyboard());
-        btnHitung.setOnClickListener(v -> hitungSemua());
         btnHitungBottom.setOnClickListener(v -> hitungSemua());
         btnClear.setOnClickListener(v -> resetUI());
         btnHideKeyboard.setOnClickListener(v -> hideKeyboard());
-        
-        rowNaik.setOnClickListener(v -> toggleExpand(detailNaik, arrowNaik));
-        rowTurun.setOnClickListener(v -> toggleExpand(detailTurun, arrowTurun));
-        rowEkstrem.setOnClickListener(v -> toggleExpandLayout(detailEkstrem, arrowEkstrem));
 
         btnZoomIn.setOnClickListener(v -> lineChart.zoomIn());
         btnZoomOut.setOnClickListener(v -> lineChart.zoomOut());
-        btnZoomReset.setOnClickListener(v -> lineChart.fitScreen());
     }
 
     private void hitungSemua() {
@@ -132,8 +142,11 @@ public class GrafikFragment extends Fragment {
         if (TextUtils.isEmpty(raw)) return;
 
         try {
-            String derivative = computeDerivative(raw);
+            String derivative = cleanExpression(computeDerivative(raw));
+
             txtHasilTurunan.setText("f′(x) = " + derivative);
+            txtHasilTurunan.setTextColor(Color.parseColor("#1D4FFF"));
+
             txtLegendFx.setText("— f(x) = " + raw);
             txtLegendDfx.setText("— f′(x) = " + derivative);
 
@@ -142,36 +155,89 @@ public class GrafikFragment extends Fragment {
             hideKeyboard();
         } catch (Exception e) {
             txtHasilTurunan.setText("Error");
+            txtHasilTurunan.setTextColor(Color.RED);
         }
+    }
+
+    private String computeDerivative(String expr) {
+        String f = expr.replace(" ", "").replace("−", "-");
+
+        if (f.contains("/") || f.contains("÷")) {
+            String[] parts = f.split("[/÷]");
+            if (parts.length == 2) {
+                String u = parts[0].replaceAll("^\\((.*)\\)$", "$1");
+                String v = parts[1].replaceAll("^\\((.*)\\)$", "$1");
+
+                String du = computePolynomialDerivative(u);
+                String dv = computePolynomialDerivative(v);
+
+                return "((" + du + ")*(" + v + ")-(" + u + ")*(" + dv + "))/((" + v + ")^2)";
+            }
+        }
+
+        return computePolynomialDerivative(f);
+    }
+
+    private String computePolynomialDerivative(String expr) {
+        String f = expr;
+        if (!f.startsWith("-") && !f.startsWith("+")) f = "+" + f;
+        StringBuilder res = new StringBuilder();
+        String[] terms = f.split("(?=[+-])");
+        for (String t : terms) {
+            if (t.isEmpty()) continue;
+            String d = deriveSuku(t.substring(1), t.substring(0, 1));
+            if (d != null && !d.equals("0")) {
+                if (res.length() > 0 && !d.startsWith("-")) res.append("+");
+                res.append(d);
+            }
+        }
+        return res.length() == 0 ? "0" : res.toString();
     }
 
     private void updateAnalisis(String fx, String dfx) {
         String fNorm = normalizeExpr(fx);
         String dfNorm = normalizeExpr(dfx);
 
-        // --- ANALISIS DOMAIN (Sederhana) ---
+        // --- 1. HITUNG DOMAIN & ASIMTOT TEGAK ---
         String domain = "ℝ";
-        if (fx.contains("√")) {
+        double asimtotX = Double.NaN;
+
+        if (fx.contains("/") || fx.contains("÷")) {
+            String[] parts = fx.split("[/÷]");
+            if (parts.length == 2) {
+                String penyebut = parts[1].replace("(", "").replace(")", "");
+                for (double x = -10; x <= 10; x += 0.05) {
+                    if (Math.abs(evalDenganX(normalizeExpr(penyebut), x)) < 0.01) {
+                        asimtotX = Math.round(x * 10.0) / 10.0;
+                        domain = "ℝ, x ≠ " + formatNum(asimtotX);
+                        break;
+                    }
+                }
+            }
+        } else if (fx.contains("√")) {
             domain = "{x | x ≥ 0}";
         } else if (fx.contains("ln") || fx.contains("log")) {
             domain = "{x | x > 0}";
-        } else if (fx.contains("/")) {
-            domain = "ℝ, x ≠ asimtot";
         }
         txtInfoDomain.setText("• Domain: " + domain);
 
-        // --- ANALISIS SUMBU Y ---
+        // --- 2. HITUNG SUMBU-Y ---
         double y0 = evalDenganX(fNorm, 0);
-        txtInfoSumbuY.setText("• Sumbu-Y: " + (Double.isNaN(y0) ? "−" : "(0, " + formatNum(y0) + ")"));
+        txtInfoSumbuY.setText("• Sumbu-Y: " + (Double.isNaN(y0) || Double.isInfinite(y0) ? "−" : "(0, " + formatNum(y0) + ")"));
 
-        // --- ANALISIS RANGE (Berdasarkan Pemindaian Titik) ---
+        // --- 3. HITUNG SUMBU-X ---
+        List<Double> zerosX = findZeros(fNorm, -6, 6);
+        txtInfoSumbuX.setText("• Sumbu-X: " + (zerosX.isEmpty() ? "−" : formatPoints(zerosX)));
+
+        // --- 4. HITUNG RANGE ---
         double minY = Double.MAX_VALUE;
         double maxY = -Double.MAX_VALUE;
         boolean hasValidPoint = false;
 
-        for (double x = -10; x <= 10; x += 0.2) {
+        for (double x = -6; x <= 6; x += 0.1) {
+            if (!Double.isNaN(asimtotX) && Math.abs(x - asimtotX) < 0.2) continue;
             double y = evalDenganX(fNorm, x);
-            if (!Double.isNaN(y) && !Double.isInfinite(y)) {
+            if (!Double.isNaN(y) && !Double.isInfinite(y) && Math.abs(y) < 100) {
                 if (y < minY) minY = y;
                 if (y > maxY) maxY = y;
                 hasValidPoint = true;
@@ -180,27 +246,61 @@ public class GrafikFragment extends Fragment {
 
         String range = "ℝ";
         if (hasValidPoint) {
-            if (minY > -40 && maxY > 40) {
-                range = "ℝ"; 
-            } else if (minY > -40 && maxY <= 40) {
+            if (fx.contains("/") || fx.contains("÷")) {
+                double yLimit = evalDenganX(fNorm, 1000);
+                if (!Double.isNaN(yLimit)) range = "ℝ, y ≠ " + formatNum(Math.round(yLimit));
+            } else if (minY > -30 && maxY <= 40) {
                 range = "{y | y ≥ " + formatNum(minY) + "}";
-            } else if (minY <= -40 && maxY < 40) {
+            } else if (minY <= -40 && maxY < 30) {
                 range = "{y | y ≤ " + formatNum(maxY) + "}";
             }
         }
         txtInfoRange.setText("• Range: " + range);
 
-        // --- ANALISIS SUMBU X ---
-        List<Double> zerosX = findZeros(fNorm, -5, 5);
-        txtInfoSumbuX.setText("• Sumbu-X: " + (zerosX.isEmpty() ? "−" : formatPoints(zerosX)));
-
-        // --- TITIK KRITIS ---
-        List<Double> kritis = findZeros(dfNorm, -5, 5);
+        // --- 5. HITUNG TITIK KRITIS & f'(x) = 0 ---
+        List<Double> kritis = new ArrayList<>();
+        if (!fx.contains("/") && !fx.contains("÷")) {
+            kritis = findZeros(dfNorm, -5, 5);
+        }
         txtInfoTitikKritis.setText("• Titik kritis: " + (kritis.isEmpty() ? "−" : formatXList(kritis)));
         txtInfoNolTurunan.setText("• f′(x)=0: " + (kritis.isEmpty() ? "−" : formatXList(kritis)));
 
+        // --- 6. DETEKSI INTERVAL FUNGSI NAIK / TURUN ---
+        boolean selaluNaik = true;
+        boolean selaluTurun = true;
+
+        for (double x = -5; x <= 5; x += 0.2) {
+            if (!Double.isNaN(asimtotX) && Math.abs(x - asimtotX) < 0.3) continue;
+            double dy = evalDenganX(dfNorm, x);
+            if (!Double.isNaN(dy) && !Double.isInfinite(dy)) {
+                if (dy > 0) selaluTurun = false;
+                if (dy < 0) selaluNaik = false;
+            }
+        }
+
+        String naikInterval = "−";
+        String turunInterval = "−";
+
+        if (selaluNaik) {
+            naikInterval = "Seluruh daerah asal";
+        } else if (selaluTurun) {
+            turunInterval = "Seluruh daerah asal";
+        } else if (!kritis.isEmpty()) {
+            double k = kritis.get(0);
+            double tester = evalDenganX(dfNorm, k - 0.5);
+            if (tester > 0) {
+                naikInterval = "x < " + formatNum(k);
+                turunInterval = "x > " + formatNum(k);
+            } else {
+                naikInterval = "x > " + formatNum(k);
+                turunInterval = "x < " + formatNum(k);
+            }
+        }
+
+        txtInfoPositif.setText("• f′(x)>0: " + naikInterval);
+        txtInfoNegatif.setText("• f′(x)<0: " + turunInterval);
+
         updateKritisCards(kritis);
-        updatePenjelasan(fNorm, dfNorm, kritis);
     }
 
     private void updateKritisCards(List<Double> list) {
@@ -211,15 +311,6 @@ public class GrafikFragment extends Fragment {
                 views[i].setVisibility(View.VISIBLE);
                 views[i].setText("Titik kritis\nx = " + formatNum(list.get(i)));
             } else views[i].setVisibility(View.GONE);
-        }
-    }
-
-    private void updatePenjelasan(String f, String df, List<Double> kritis) {
-        if (!kritis.isEmpty()) {
-            double x1 = kritis.get(0);
-            double fx1 = evalDenganX(f, x1);
-            txtMaksimumLokal.setText("• Titik di x = " + formatNum(x1) + ", f(x) = " + formatNum(fx1));
-            txtEkstremDesc.setText("Ditemukan " + kritis.size() + " titik kritis");
         }
     }
 
@@ -237,29 +328,22 @@ public class GrafikFragment extends Fragment {
         }
 
         LineDataSet set1 = new LineDataSet(fxEntries, "f(x)");
-        set1.setColor(0xFF1D4FFF); set1.setLineWidth(2f); set1.setDrawCircles(false);
+        set1.setColor(0xFF1D4FFF);
+        set1.setLineWidth(2.5f);
+        set1.setDrawCircles(false);
+        set1.setDrawValues(false); // Mematikan nilai angka di setiap koordinat titik agar grafik bersih
+        set1.setMode(LineDataSet.Mode.CUBIC_BEZIER); // Membuat lekukan kurva f(x) mulus sama seperti TurunanFragment
+
         LineDataSet set2 = new LineDataSet(dfxEntries, "f'(x)");
-        set2.setColor(0xFFEF4444); set2.setLineWidth(2f); set2.setDrawCircles(false);
+        set2.setColor(0xFFEF4444);
+        set2.setLineWidth(2.5f);
+        set2.setDrawCircles(false);
+        set2.setDrawValues(false); // Mematikan nilai angka di setiap koordinat titik agar grafik bersih
+        set2.setMode(LineDataSet.Mode.CUBIC_BEZIER); // Membuat lekukan kurva f'(x) mulus sama seperti TurunanFragment
 
         lineChart.setData(new LineData(set1, set2));
         lineChart.animateX(500);
         lineChart.invalidate();
-    }
-
-    private String computeDerivative(String expr) {
-        String f = expr.replace(" ", "").replace("−", "-");
-        if (!f.startsWith("-") && !f.startsWith("+")) f = "+" + f;
-        StringBuilder res = new StringBuilder();
-        String[] terms = f.split("(?=[+-])");
-        for (String t : terms) {
-            if (t.isEmpty()) continue;
-            String d = deriveSuku(t.substring(1), t.substring(0, 1));
-            if (d != null && !d.equals("0")) {
-                if (res.length() > 0 && !d.startsWith("-")) res.append("+");
-                res.append(d);
-            }
-        }
-        return res.length() == 0 ? "0" : res.toString();
     }
 
     private String deriveSuku(String s, String sgn) {
@@ -279,6 +363,14 @@ public class GrafikFragment extends Fragment {
         return formatNum(nk) + "x^" + formatNum(ne);
     }
 
+    private String cleanExpression(String expr) {
+        if (expr == null) return "0";
+        return expr.replace(".0x", "x")
+                .replace(".0+", "+")
+                .replace(".0-", "-")
+                .replaceAll("1x", "x");
+    }
+
     private List<Double> findZeros(String expr, double start, double end) {
         List<Double> results = new ArrayList<>();
         double prev = evalDenganX(expr, start);
@@ -296,21 +388,28 @@ public class GrafikFragment extends Fragment {
         int[] ids = {R.id.btn0, R.id.btn1, R.id.btn2, R.id.btn3, R.id.btn4, R.id.btn5, R.id.btn6, R.id.btn7, R.id.btn8, R.id.btn9,
                 R.id.btnDot, R.id.btnPlus, R.id.btnMinus, R.id.btnMultiply, R.id.btnDivide, R.id.btnCaret, R.id.btnOpenParen, R.id.btnCloseParen,
                 R.id.btnX, R.id.btnPi, R.id.btnE, R.id.btnSqrt, R.id.btnSquare, R.id.btnPow, R.id.btnSin, R.id.btnCos, R.id.btnTan, R.id.btnLn, R.id.btnLog};
-        String[] vals = {"0","1","2","3","4","5","6","7","8","9",".","+","-","*","/","^","(",")","x","π","e","√","^2","^","sin(","cos(","tan(","ln(","log("};
+
+        String[] vals = {"0","1","2","3","4","5","6","7","8","9",".","+","-","*","/","^","(",")","x","π","e","√","²","^","sin(","cos(","tan(","ln(","log("};
+
         for (int i = 0; i < ids.length; i++) {
             final String s = vals[i];
-            v.findViewById(ids[i]).setOnClickListener(v1 -> {
-                int start = activeInput.getSelectionStart();
-                activeInput.getText().insert(start, s);
+            View btn = v.findViewById(ids[i]);
+            if (btn != null) {
+                btn.setOnClickListener(v1 -> {
+                    int start = activeInput.getSelectionStart();
+                    activeInput.getText().insert(start, s);
+                });
+            }
+        }
+        View backspace = v.findViewById(R.id.btnBackspace);
+        if (backspace != null) {
+            backspace.setOnClickListener(v1 -> {
+                String s = activeInput.getText().toString();
+                if (!s.isEmpty()) { activeInput.setText(s.substring(0, s.length()-1)); activeInput.setSelection(activeInput.length()); }
             });
         }
-        v.findViewById(R.id.btnBackspace).setOnClickListener(v1 -> {
-            String s = activeInput.getText().toString();
-            if (!s.isEmpty()) { activeInput.setText(s.substring(0, s.length()-1)); activeInput.setSelection(activeInput.length()); }
-        });
-        v.findViewById(R.id.btnAC).setOnClickListener(v1 -> activeInput.setText(""));
-        v.findViewById(R.id.btnEquals).setOnClickListener(v1 -> hitungSemua());
-        v.findViewById(R.id.btnHitungBottom).setOnClickListener(v1 -> hitungSemua());
+        View ac = v.findViewById(R.id.btnAC);
+        if (ac != null) ac.setOnClickListener(v1 -> resetUI());
     }
 
     private double evalDenganX(String expr, double x) {
@@ -358,13 +457,29 @@ public class GrafikFragment extends Fragment {
     }
 
     private void resetUI() {
-        inputFunction.setText(""); txtHasilTurunan.setText("f′(x) = ...");
-        lineChart.clear(); containerTitikKritis.setVisibility(View.GONE);
+        inputFunction.setText("");
+
+        txtHasilTurunan.setText("f′(x) = Tampil Di Sini");
+        txtHasilTurunan.setTextColor(Color.parseColor("#9CA3AF"));
+
+        txtLegendFx.setText("— f(x)");
+        txtLegendDfx.setText("— f′(x)");
+
+        lineChart.clear();
+
+        containerTitikKritis.setVisibility(View.GONE);
+        txtInfoDomain.setText("• Domain: −");
+        txtInfoRange.setText("• Range: −");
+        txtInfoSumbuX.setText("• Sumbu-X: −");
+        txtInfoSumbuY.setText("• Sumbu-Y: −");
+        txtInfoTitikKritis.setText("• Titik kritis: −");
+        txtInfoNolTurunan.setText("• f′(x)=0: −");
+        txtInfoPositif.setText("• f′(x)>0: −");
+        txtInfoNegatif.setText("• f′(x)<0: −");
     }
+
     private void showKeyboard() { keyboardPanel.setVisibility(View.VISIBLE); }
     private void hideKeyboard() { keyboardPanel.setVisibility(View.GONE); }
-    private void toggleExpand(View d, ImageView a) { boolean s = d.getVisibility()==View.GONE; d.setVisibility(s?View.VISIBLE:View.GONE); a.setRotation(s?180:0); }
-    private void toggleExpandLayout(View d, ImageView a) { toggleExpand(d, a); }
     private String formatNum(double d) { if(Double.isNaN(d)) return "−"; if(d==(long)d) return String.valueOf((long)d); return String.format("%.2f", d).replaceAll("0+$","").replaceAll("\\.$",""); }
     private String formatPoints(List<Double> list) { StringBuilder sb = new StringBuilder(); for(int i=0; i<list.size(); i++) { sb.append("(").append(formatNum(list.get(i))).append(",0)"); if(i<list.size()-1) sb.append(", "); } return sb.toString(); }
     private String formatXList(List<Double> list) { StringBuilder sb = new StringBuilder(); for(int i=0; i<list.size(); i++) { sb.append("x=").append(formatNum(list.get(i))); if(i<list.size()-1) sb.append(", "); } return sb.toString(); }

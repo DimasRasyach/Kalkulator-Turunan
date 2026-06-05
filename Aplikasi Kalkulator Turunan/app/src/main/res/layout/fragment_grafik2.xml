@@ -22,7 +22,7 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Masukkan fungsi"
+                android:text="Masukkan Fungsi"
                 android:textStyle="bold"
                 android:textSize="15sp"
                 android:textColor="#111827"/>
@@ -52,14 +52,6 @@
                         android:orientation="horizontal"
                         android:gravity="center_vertical">
 
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="f(x) = "
-                            android:textSize="20sp"
-                            android:textStyle="italic"
-                            android:textColor="#1D4FFF"/>
-
                         <EditText
                             android:id="@+id/inputFunction"
                             android:layout_width="0dp"
@@ -71,7 +63,7 @@
                             android:inputType="none"
                             android:focusable="true"
                             android:singleLine="true"
-                            android:hint="x³ − 3x + 2"
+                            android:hint="f(x) = ..."
                             android:textColorHint="#9CA3AF"/>
                     </LinearLayout>
 
@@ -92,7 +84,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="16dp"
-                android:text="Turunan"
+                android:text="Hasil Turunan"
                 android:textStyle="bold"
                 android:textSize="15sp"
                 android:textColor="#111827"/>
@@ -104,9 +96,8 @@
                 android:orientation="horizontal">
 
                 <com.google.android.material.card.MaterialCardView
-                    android:layout_width="0dp"
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_weight="1"
                     app:cardCornerRadius="16dp"
                     app:cardElevation="0dp"
                     app:cardBackgroundColor="#F0F4FF"
@@ -118,29 +109,18 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:padding="14dp"
-                        android:text="f′(x) = ..."
-                        android:textColor="#1D4FFF"
-                        android:textStyle="bold|italic"
+                        android:text="f′(x) = Tampil Di Sini"
+                        android:textColor="#9CA3AF"
+                        android:textStyle="bold"
                         android:textSize="18sp"/>
                 </com.google.android.material.card.MaterialCardView>
-
-                <Button
-                    android:id="@+id/btnHitung"
-                    android:layout_width="wrap_content"
-                    android:layout_height="match_parent"
-                    android:layout_marginStart="12dp"
-                    android:backgroundTint="#1D4FFF"
-                    android:text="Hitung Turunan"
-                    android:textAllCaps="false"
-                    android:textColor="#FFFFFF"
-                    app:cornerRadius="14dp"/>
             </LinearLayout>
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="20dp"
-                android:text="Grafik Fungsi dan Turunannya"
+                android:text="Grafik"
                 android:textStyle="bold"
                 android:textSize="15sp"
                 android:textColor="#111827"/>
@@ -177,6 +157,7 @@
                             android:id="@+id/lineChart"
                             android:layout_width="match_parent"
                             android:layout_height="match_parent"/>
+
                         <LinearLayout
                             android:layout_width="40dp"
                             android:layout_height="wrap_content"
@@ -185,7 +166,6 @@
                             android:orientation="vertical">
                             <Button android:id="@+id/btnZoomIn" android:layout_width="40dp" android:layout_height="40dp" android:text="+" android:backgroundTint="#FFFFFF" android:textColor="#4B5563" app:strokeWidth="1dp" app:strokeColor="#E5E7EB" app:cornerRadius="10dp" android:padding="0dp"/>
                             <Button android:id="@+id/btnZoomOut" android:layout_width="40dp" android:layout_height="40dp" android:layout_marginTop="4dp" android:text="−" android:backgroundTint="#FFFFFF" android:textColor="#4B5563" app:strokeWidth="1dp" app:strokeColor="#E5E7EB" app:cornerRadius="10dp" android:padding="0dp"/>
-                            <ImageButton android:id="@+id/btnZoomReset" android:layout_width="40dp" android:layout_height="40dp" android:layout_marginTop="4dp" android:src="@drawable/ic_fullscreen" android:backgroundTint="#FFFFFF" app:strokeWidth="1dp" app:strokeColor="#E5E7EB" android:scaleType="centerInside" android:padding="8dp"/>
                         </LinearLayout>
                     </RelativeLayout>
 
@@ -249,52 +229,6 @@
                 </com.google.android.material.card.MaterialCardView>
             </LinearLayout>
 
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="20dp"
-                android:text="Penjelasan"
-                android:textStyle="bold"
-                android:textSize="15sp"
-                android:textColor="#111827"/>
-
-            <com.google.android.material.card.MaterialCardView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="10dp"
-                app:cardCornerRadius="20dp"
-                app:cardBackgroundColor="#FFFFFF"
-                app:strokeColor="#E5E7EB"
-                app:strokeWidth="1dp">
-                <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical">
-                    <LinearLayout android:id="@+id/rowNaik" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:clickable="true" android:focusable="true">
-                        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:padding="14dp" android:gravity="center_vertical">
-                            <TextView android:id="@+id/txtNaikDesc" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="f′(x) > 0 → fungsi naik" android:textSize="13sp" android:textColor="#374151"/>
-                            <ImageView android:id="@+id/arrowNaik" android:layout_width="20dp" android:layout_height="20dp" android:src="@drawable/ic_chevron_down"/>
-                        </LinearLayout>
-                        <TextView android:id="@+id/detailNaik" android:layout_width="match_parent" android:layout_height="wrap_content" android:paddingStart="14dp" android:paddingEnd="14dp" android:paddingBottom="12dp" android:visibility="gone" android:textSize="12sp" android:textColor="#6B7280"/>
-                    </LinearLayout>
-                    <LinearLayout android:id="@+id/rowTurun" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:clickable="true" android:focusable="true">
-                        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:padding="14dp" android:gravity="center_vertical">
-                            <TextView android:id="@+id/txtTurunDesc" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="f′(x) &lt; 0 → fungsi turun" android:textSize="13sp" android:textColor="#374151"/>
-                            <ImageView android:id="@+id/arrowTurun" android:layout_width="20dp" android:layout_height="20dp" android:src="@drawable/ic_chevron_down"/>
-                        </LinearLayout>
-                        <TextView android:id="@+id/detailTurun" android:layout_width="match_parent" android:layout_height="wrap_content" android:paddingStart="14dp" android:paddingEnd="14dp" android:paddingBottom="12dp" android:visibility="gone" android:textSize="12sp" android:textColor="#6B7280"/>
-                    </LinearLayout>
-                    <LinearLayout android:id="@+id/rowEkstrem" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:clickable="true" android:focusable="true">
-                        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:padding="14dp" android:gravity="center_vertical">
-                            <TextView android:id="@+id/txtEkstremDesc" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="Titik ekstrem" android:textSize="13sp" android:textColor="#374151" android:textStyle="bold"/>
-                            <ImageView android:id="@+id/arrowEkstrem" android:layout_width="20dp" android:layout_height="20dp" android:src="@drawable/ic_chevron_down"/>
-                        </LinearLayout>
-                        <LinearLayout android:id="@+id/detailEkstrem" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:paddingStart="14dp" android:paddingEnd="14dp" android:paddingBottom="12dp" android:visibility="gone">
-                            <TextView android:id="@+id/txtMaksimumLokal" android:layout_width="wrap_content" android:layout_height="wrap_content" android:textSize="12sp" android:textColor="#6B7280"/>
-                            <TextView android:id="@+id/txtMinimumLokal" android:layout_width="wrap_content" android:layout_height="wrap_content" android:textSize="12sp" android:textColor="#6B7280"/>
-                        </LinearLayout>
-                    </LinearLayout>
-                </LinearLayout>
-            </com.google.android.material.card.MaterialCardView>
-
-            <View android:layout_width="match_parent" android:layout_height="350dp"/>
         </LinearLayout>
     </androidx.core.widget.NestedScrollView>
 
@@ -308,7 +242,7 @@
         android:elevation="8dp"
         android:padding="12dp">
         <LinearLayout android:id="@+id/btnHideKeyboard" android:layout_width="match_parent" android:layout_height="30dp" android:gravity="center"><View android:layout_width="40dp" android:layout_height="4dp" android:background="#D1D5DB"/></LinearLayout>
-        <!-- Rows Keyboard di sini (Gunakan style KeyboardButtonStyle Anda) -->
+
         <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal">
             <Button android:id="@+id/btnSin" style="@style/KeyboardButtonStyle" android:text="sin"/>
             <Button android:id="@+id/btnCos" style="@style/KeyboardButtonStyle" android:text="cos"/>
