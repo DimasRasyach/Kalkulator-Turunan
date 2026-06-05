@@ -46,7 +46,7 @@ public class TurunanFragment extends Fragment {
     private ImageButton      btnClear;
     private LineChart        lineChart;
     private NestedScrollView nestedScrollView;
-    private View             keyboardPanel;
+    private View             keyboardPanel, btnHideKeyboard;
 
 
     // RecyclerView langkah
@@ -82,12 +82,17 @@ public class TurunanFragment extends Fragment {
     // =========================================================
     private void bindViews(View view) {
         inputFunction    = view.findViewById(R.id.inputFunction);
+        
+        // MATIKAN KEYBOARD SISTEM HP
+        inputFunction.setShowSoftInputOnFocus(false);
+        
         txtHasil         = view.findViewById(R.id.txtHasil);
         btnHitungBottom  = view.findViewById(R.id.btnHitungBottom);
         btnClear         = view.findViewById(R.id.btnClear);
         lineChart        = view.findViewById(R.id.lineChart);
         nestedScrollView = view.findViewById(R.id.nestedScrollView);
         keyboardPanel    = view.findViewById(R.id.keyboardPanel);
+        btnHideKeyboard  = view.findViewById(R.id.btnHideKeyboard);
         rvSteps          = view.findViewById(R.id.rvSteps);
 
         inputFunction.setFocusable(true);
@@ -155,6 +160,12 @@ public class TurunanFragment extends Fragment {
     // Keyboard — sama persis dengan kode lama kamu
     // =========================================================
     private void setupKeyboard(View view) {
+        inputFunction.setOnClickListener(v -> showCustomKeyboard());
+
+        if (btnHideKeyboard != null) {
+            btnHideKeyboard.setOnClickListener(v -> hideCustomKeyboard());
+        }
+
         int[]    ids  = {
                 R.id.btnSin, R.id.btnCos, R.id.btnTan, R.id.btnLn,  R.id.btnLog,
                 R.id.btnSqrt, R.id.btnSquare, R.id.btnPow, R.id.btnPi, R.id.btnE,
@@ -182,7 +193,7 @@ public class TurunanFragment extends Fragment {
 
         // Tombol =
         Button btnEquals = view.findViewById(R.id.btnEquals);
-        if (btnEquals != null) btnEquals.setOnClickListener(v -> evaluasiEkspresi());
+        if (btnEquals != null) btnEquals.setOnClickListener(v -> hitungTurunan());
 
         // Backspace
         Button btnBackspace = view.findViewById(R.id.btnBackspace);
@@ -211,6 +222,35 @@ public class TurunanFragment extends Fragment {
         String newText = cur.substring(0, pos) + text + cur.substring(pos);
         inputFunction.setText(newText);
         inputFunction.setSelection(pos + text.length());
+    }
+
+    private void hideCustomKeyboard() {
+        if (keyboardPanel != null) {
+            keyboardPanel.setVisibility(View.GONE);
+            // Reset padding saat keyboard ditutup agar tidak ada ruang kosong di bawah
+            nestedScrollView.setPadding(
+                nestedScrollView.getPaddingLeft(),
+                nestedScrollView.getPaddingTop(),
+                nestedScrollView.getPaddingRight(),
+                0
+            );
+        }
+    }
+
+    private void showCustomKeyboard() {
+        if (keyboardPanel != null) {
+            keyboardPanel.setVisibility(View.VISIBLE);
+            // Pasang kembali padding sesuai tinggi keyboard
+            keyboardPanel.post(() -> {
+                int kbHeight = keyboardPanel.getHeight();
+                nestedScrollView.setPadding(
+                    nestedScrollView.getPaddingLeft(),
+                    nestedScrollView.getPaddingTop(),
+                    nestedScrollView.getPaddingRight(),
+                    kbHeight
+                );
+            });
+        }
     }
 
     // =========================================================
@@ -259,22 +299,44 @@ public class TurunanFragment extends Fragment {
     // =========================================================
     private void updateSteps(String input, String hasil) {
         List<Stepmodel> steps = new ArrayList<>();
+        
+        // Step 1: Notasi Penulisan Turunan (Gambar 2)
         steps.add(new Stepmodel(1,
-                "Identifikasi fungsi",
-                "Analisis",
-                "Fungsi yang diinputkan: f(x) = " + input));
+                "Notasi Penulisan Turunan",
+                "f'(x) atau dy/dx",
+                "Berdasarkan Gambar 2, sebuah fungsi yang sedang diturunkan dapat ditulis dalam Notasi Aksen f'(x), Notasi Leibniz dy/dx, atau Notasi Operator D."));
+
+        // Step 2: Identifikasi Aturan (Gambar 3/4)
+        String ruleName = "Theorem C: Power Rule";
+        String ruleFormula = "Dₓ(xⁿ) = nxⁿ⁻¹";
+        
+        if (!input.contains("x")) {
+            ruleName = "Theorem A: Constant Function Rule";
+            ruleFormula = "Dₓ(k) = 0";
+        } else if (input.trim().equals("x")) {
+            ruleName = "Theorem B: Identity Function Rule";
+            ruleFormula = "Dₓ(x) = 1";
+        } else if (input.contains("+") || input.contains("-")) {
+            ruleName = "Theorem E & F: Sum and Difference Rule";
+            ruleFormula = "Dₓ[f(x) ± g(x)] = f'(x) ± g'(x)";
+        }
+        
         steps.add(new Stepmodel(2,
-                "Gunakan aturan turunan",
-                "Power Rule",
-                "d/dx(xⁿ) = nxⁿ⁻¹,  d/dx(ax) = a,  d/dx(c) = 0"));
+                ruleName,
+                ruleFormula,
+                "Langkah selanjutnya adalah menentukan aturan turunan aljabar yang sesuai berdasarkan Teorema Dasar pada Gambar 3 & 4."));
+
+        // Step 3: Proses Diferensiasi
         steps.add(new Stepmodel(3,
-                "Turunkan tiap suku",
-                "Hitung",
-                "Turunkan setiap suku satu per satu sesuai aturan"));
+                "Proses Diferensiasi",
+                "d/dx (" + input + ")",
+                "Turunkan setiap suku dengan mengalikan koefisien dengan pangkat lama, lalu kurangi pangkat variabel x sebesar 1."));
+
+        // Step 4: Hasil Akhir
         steps.add(new Stepmodel(4,
-                "Hasil akhir",
-                "Selesai",
-                "f'(x) = " + hasil));
+                "Hasil Akhir",
+                "dy/dx = " + hasil,
+                "Proses perhitungan selesai. Sesuai notasi Leibniz, turunan dari f(x) adalah " + hasil));
 
         stepAdapter.submitList(steps);
     }
