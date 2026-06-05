@@ -1,12 +1,4 @@
 package com.example.aplikasikalkulatorturunan;
-
-// TurunanFragment.java — versi refactor
-// Perubahan vs versi lama:
-//   1. Keyboard sticky: padding bawah NestedScrollView = tinggi keyboardPanel
-//   2. Langkah penyelesaian pakai RecyclerView + StepAdapter (bukan 4 card statis)
-//   3. resetAll() satu tempat untuk clear semua state
-//   4. Selebihnya (eval, turunan, grafik) tidak diubah — copy dari kode lama kamu
-
 import android.graphics.Color;
 import android.os.Bundle;
 import android.view.LayoutInflater;
@@ -41,21 +33,17 @@ public class TurunanFragment extends Fragment {
 
     // Views
     private EditText         inputFunction;
-    private TextView txtHasil;
+    private TextView         txtHasil;
     private Button           btnHitungBottom;
     private ImageButton      btnClear;
     private LineChart        lineChart;
     private NestedScrollView nestedScrollView;
     private View             keyboardPanel, btnHideKeyboard;
 
-
     // RecyclerView langkah
     private RecyclerView rvSteps;
     private StepAdapter  stepAdapter;
 
-    // =========================================================
-    // Lifecycle
-    // =========================================================
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater,
@@ -77,15 +65,10 @@ public class TurunanFragment extends Fragment {
         setupButtons();
     }
 
-    // =========================================================
-    // Bind views
-    // =========================================================
     private void bindViews(View view) {
-        inputFunction    = view.findViewById(R.id.inputFunction);
-        
-        // MATIKAN KEYBOARD SISTEM HP
-        inputFunction.setShowSoftInputOnFocus(false);
-        
+        inputFunction = view.findViewById(R.id.inputFunction);
+        inputFunction.setShowSoftInputOnFocus(false); // Matikan soft keyboard bawaan HP
+
         txtHasil         = view.findViewById(R.id.txtHasil);
         btnHitungBottom  = view.findViewById(R.id.btnHitungBottom);
         btnClear         = view.findViewById(R.id.btnClear);
@@ -101,22 +84,14 @@ public class TurunanFragment extends Fragment {
         inputFunction.setSingleLine(true);
     }
 
-    // =========================================================
-    // RecyclerView setup
-    // =========================================================
     private void setupRecyclerView() {
         stepAdapter = new StepAdapter();
         rvSteps.setAdapter(stepAdapter);
         rvSteps.setLayoutManager(new LinearLayoutManager(requireContext()));
-        // Nonaktifkan scroll sendiri — biar NestedScrollView yang handle
         rvSteps.setNestedScrollingEnabled(false);
         rvSteps.setHasFixedSize(false);
     }
 
-    // =========================================================
-    // Keyboard sticky: beri padding bawah pada NestedScrollView
-    // sebesar tinggi keyboardPanel supaya konten tidak tertutup
-    // =========================================================
     private void setupKeyboardSticky() {
         keyboardPanel.post(() -> {
             int kbHeight = keyboardPanel.getHeight();
@@ -129,20 +104,15 @@ public class TurunanFragment extends Fragment {
         });
     }
 
-    // =========================================================
-    // System insets — hindari gesture bar HP
-    // =========================================================
     private void setupSystemInsets(View view) {
         ViewCompat.setOnApplyWindowInsetsListener(view, (v, insets) -> {
             Insets navInsets = insets.getInsets(WindowInsetsCompat.Type.navigationBars());
-            // Tambah padding bawah keyboardPanel sesuai gesture bar
             keyboardPanel.setPadding(
                     keyboardPanel.getPaddingLeft(),
                     keyboardPanel.getPaddingTop(),
                     keyboardPanel.getPaddingRight(),
                     navInsets.bottom
             );
-            // Update padding scroll area setelah insets diterapkan
             keyboardPanel.post(() -> {
                 int kbHeight = keyboardPanel.getHeight();
                 nestedScrollView.setPadding(
@@ -156,9 +126,6 @@ public class TurunanFragment extends Fragment {
         });
     }
 
-    // =========================================================
-    // Keyboard — sama persis dengan kode lama kamu
-    // =========================================================
     private void setupKeyboard(View view) {
         inputFunction.setOnClickListener(v -> showCustomKeyboard());
 
@@ -166,19 +133,23 @@ public class TurunanFragment extends Fragment {
             btnHideKeyboard.setOnClickListener(v -> hideCustomKeyboard());
         }
 
-        int[]    ids  = {
+        // Menghubungkan ID tombol XML kustom kamu
+        int[] ids = {
                 R.id.btnSin, R.id.btnCos, R.id.btnTan, R.id.btnLn,  R.id.btnLog,
                 R.id.btnSqrt, R.id.btnSquare, R.id.btnPow, R.id.btnPi, R.id.btnE,
-                R.id.btn7, R.id.btn8, R.id.btn9, R.id.btnDivide,
+                R.id.btn7, R.id.btn8, R.id.btn9, R.id.btnDivide, // btnDivide di XML-mu bertuliskan ÷
                 R.id.btn4, R.id.btn5, R.id.btn6, R.id.btnMultiply, R.id.btnCaret,
                 R.id.btn1, R.id.btn2, R.id.btn3, R.id.btnMinus, R.id.btnOpenParen,
                 R.id.btn0, R.id.btnDot, R.id.btnCloseParen, R.id.btnPlus,
                 R.id.btnX
         };
+
+        // DISINI KUNCINYA: R.id.btnDivide (indeks ke-13) diisi dengan "/"
+        // sehingga saat ditekan, karakter yang diketikkan ke EditText langsung berubah jadi "/"
         String[] vals = {
                 "sin(", "cos(", "tan(", "ln(",  "log(",
                 "√(",   "²",    "^",    "π",    "e",
-                "7",    "8",    "9",    "÷",
+                "7",    "8",    "9",    "/",
                 "4",    "5",    "6",    "×",    "^",
                 "1",    "2",    "3",    "-",    "(",
                 "0",    ".",    ")",    "+",
@@ -191,11 +162,9 @@ public class TurunanFragment extends Fragment {
             if (btn != null) btn.setOnClickListener(v -> appendToInput(val));
         }
 
-        // Tombol =
         Button btnEquals = view.findViewById(R.id.btnEquals);
         if (btnEquals != null) btnEquals.setOnClickListener(v -> hitungTurunan());
 
-        // Backspace
         Button btnBackspace = view.findViewById(R.id.btnBackspace);
         if (btnBackspace != null) {
             btnBackspace.setOnClickListener(v -> {
@@ -207,12 +176,10 @@ public class TurunanFragment extends Fragment {
             });
         }
 
-        // AC
         Button btnAC = view.findViewById(R.id.btnAC);
         if (btnAC != null) btnAC.setOnClickListener(v -> resetAll());
 
-        // Clear X
-        btnClear.setOnClickListener(v -> inputFunction.setText(""));
+        btnClear.setOnClickListener(v -> resetAll());
     }
 
     private void appendToInput(String text) {
@@ -227,12 +194,11 @@ public class TurunanFragment extends Fragment {
     private void hideCustomKeyboard() {
         if (keyboardPanel != null) {
             keyboardPanel.setVisibility(View.GONE);
-            // Reset padding saat keyboard ditutup agar tidak ada ruang kosong di bawah
             nestedScrollView.setPadding(
-                nestedScrollView.getPaddingLeft(),
-                nestedScrollView.getPaddingTop(),
-                nestedScrollView.getPaddingRight(),
-                0
+                    nestedScrollView.getPaddingLeft(),
+                    nestedScrollView.getPaddingTop(),
+                    nestedScrollView.getPaddingRight(),
+                    0
             );
         }
     }
@@ -240,23 +206,18 @@ public class TurunanFragment extends Fragment {
     private void showCustomKeyboard() {
         if (keyboardPanel != null) {
             keyboardPanel.setVisibility(View.VISIBLE);
-            // Pasang kembali padding sesuai tinggi keyboard
             keyboardPanel.post(() -> {
                 int kbHeight = keyboardPanel.getHeight();
                 nestedScrollView.setPadding(
-                    nestedScrollView.getPaddingLeft(),
-                    nestedScrollView.getPaddingTop(),
-                    nestedScrollView.getPaddingRight(),
-                    kbHeight
+                        nestedScrollView.getPaddingLeft(),
+                        nestedScrollView.getPaddingTop(),
+                        nestedScrollView.getPaddingRight(),
+                        kbHeight
                 );
             });
         }
     }
 
-    // =========================================================
-    // Hitung turunan — sama dengan kode lama kamu
-    // Perbedaan: updateSteps() sekarang pakai RecyclerView
-    // =========================================================
     private void setupButtons() {
         btnHitungBottom.setOnClickListener(v -> hitungTurunan());
     }
@@ -269,13 +230,10 @@ public class TurunanFragment extends Fragment {
             String hasil = turunkanPolinomial(input);
             txtHasil.setText("f'(x) = " + hasil);
 
-            // Update langkah via RecyclerView
+            hideCustomKeyboard();
             updateSteps(input, hasil);
-
-            // Grafik
             plotGrafik(input, hasil);
 
-            // Legend
             View v = getView();
             if (v != null) {
                 TextView lFx  = v.findViewById(R.id.legendFx);
@@ -284,7 +242,6 @@ public class TurunanFragment extends Fragment {
                 if (lDfx != null) lDfx.setText("f'(x) = " + hasil);
             }
 
-            // Scroll ke bagian langkah
             nestedScrollView.post(() ->
                     nestedScrollView.smoothScrollTo(0, rvSteps.getTop())
             );
@@ -294,23 +251,21 @@ public class TurunanFragment extends Fragment {
         }
     }
 
-    // =========================================================
-    // Update langkah — sekarang pakai StepAdapter
-    // =========================================================
     private void updateSteps(String input, String hasil) {
         List<Stepmodel> steps = new ArrayList<>();
-        
-        // Step 1: Notasi Penulisan Turunan (Gambar 2)
+
         steps.add(new Stepmodel(1,
                 "Notasi Penulisan Turunan",
-                "f'(x) atau dy/dx",
-                "Berdasarkan Gambar 2, sebuah fungsi yang sedang diturunkan dapat ditulis dalam Notasi Aksen f'(x), Notasi Leibniz dy/dx, atau Notasi Operator D."));
+                "f'(x) = dy/dx = D[f(x)]",
+                "Sebuah fungsi yang diturunkan dapat ditulis dalam Notasi Aksen f'(x), Notasi Leibniz dy/dx, atau Notasi Operator D."));
 
-        // Step 2: Identifikasi Aturan (Gambar 3/4)
         String ruleName = "Theorem C: Power Rule";
-        String ruleFormula = "Dₓ(xⁿ) = nxⁿ⁻¹";
-        
-        if (!input.contains("x")) {
+        String ruleFormula = "Dₓ(xⁿ) = n·xⁿ⁻¹";
+
+        if (input.contains("/")) {
+            ruleName = "Theorem H: Quotient Rule (Aturan Pembagian)";
+            ruleFormula = "Dₓ[u/v] = (u'v - uv') / v²";
+        } else if (!input.contains("x")) {
             ruleName = "Theorem A: Constant Function Rule";
             ruleFormula = "Dₓ(k) = 0";
         } else if (input.trim().equals("x")) {
@@ -320,36 +275,32 @@ public class TurunanFragment extends Fragment {
             ruleName = "Theorem E & F: Sum and Difference Rule";
             ruleFormula = "Dₓ[f(x) ± g(x)] = f'(x) ± g'(x)";
         }
-        
+
         steps.add(new Stepmodel(2,
                 ruleName,
                 ruleFormula,
-                "Langkah selanjutnya adalah menentukan aturan turunan aljabar yang sesuai berdasarkan Teorema Dasar pada Gambar 3 & 4."));
+                "Menentukan aturan turunan aljabar yang sesuai berdasarkan Teorema Dasar Diferensial."));
 
-        // Step 3: Proses Diferensiasi
         steps.add(new Stepmodel(3,
                 "Proses Diferensiasi",
                 "d/dx (" + input + ")",
-                "Turunkan setiap suku dengan mengalikan koefisien dengan pangkat lama, lalu kurangi pangkat variabel x sebesar 1."));
+                "Mengevaluasi dan menurunkan komponen fungsi aljabar sesuai dengan kaidah kalkulus turunan dasar."));
 
-        // Step 4: Hasil Akhir
         steps.add(new Stepmodel(4,
                 "Hasil Akhir",
-                "dy/dx = " + hasil,
-                "Proses perhitungan selesai. Sesuai notasi Leibniz, turunan dari f(x) adalah " + hasil));
+                "f'(x) = " + hasil,
+                "Proses perhitungan selesai. Turunan dari f(x) = " + input + " adalah f'(x) = " + hasil));
 
         stepAdapter.submitList(steps);
     }
 
-    // =========================================================
-    // Reset semua ke kondisi awal
-    // =========================================================
     private void resetAll() {
         inputFunction.setText("");
         txtHasil.setText("");
         lineChart.clear();
         lineChart.invalidate();
         stepAdapter.submitList(new ArrayList<>());
+        hideCustomKeyboard();
 
         View v = getView();
         if (v != null) {
@@ -359,25 +310,7 @@ public class TurunanFragment extends Fragment {
     }
 
     // =========================================================
-    // Evaluasi ekspresi numerik (tombol =)
-    // Sama persis dengan kode lama kamu
-    // =========================================================
-    private void evaluasiEkspresi() {
-        String raw = inputFunction.getText().toString().trim();
-        if (raw.isEmpty()) return;
-        try {
-            double hasil    = eval(normalizeExpr(raw));
-            String hasilStr = formatHasil(hasil);
-            txtHasil.setText("= " + hasilStr);
-
-            stepAdapter.submitList(new ArrayList<>());
-        } catch (Exception e) {
-            txtHasil.setText("Error");
-        }
-    }
-
-    // =========================================================
-    // TURUNAN POLINOMIAL — tidak diubah dari kode lama kamu
+    // PARSER TURUNAN UTAMA (Mendukung Pembagian Dinamis + Simpel)
     // =========================================================
     private String turunkanPolinomial(String expr) {
         String e = expr.replaceAll("\\s+", "")
@@ -386,6 +319,65 @@ public class TurunanFragment extends Fragment {
                 .replace("²", "^2")
                 .replace("π", String.valueOf(Math.PI));
 
+        // -----------------------------------------------------
+        // PARSER OTOMATIS ATURAN PEMBAGIAN (QUOTIENT RULE)
+        // -----------------------------------------------------
+        if (e.contains("/")) {
+            String[] parts = e.split("/");
+            if (parts.length == 2) {
+                String uRaw = parts[0];
+                String vRaw = parts[1];
+
+                if (uRaw.startsWith("(") && uRaw.endsWith(")")) {
+                    uRaw = uRaw.substring(1, uRaw.length() - 1);
+                }
+                if (vRaw.startsWith("(") && vRaw.endsWith(")")) {
+                    vRaw = vRaw.substring(1, vRaw.length() - 1);
+                }
+
+                String uDash = turunkanPolinomial(uRaw);
+                String vDash = turunkanPolinomial(vRaw);
+
+                String pembilangFinal = "";
+
+                // Kasus Khusus 1: Jika u = x dan v = x + konstanta atau x - konstanta
+                if (uDash.equals("1") && vDash.equals("1")) {
+                    if (vRaw.contains("+")) {
+                        pembilangFinal = vRaw.substring(vRaw.indexOf("+") + 1);
+                    } else if (vRaw.contains("-")) {
+                        pembilangFinal = "-" + vRaw.substring(vRaw.indexOf("-") + 1);
+                    } else {
+                        pembilangFinal = "0";
+                    }
+                }
+                // Kasus Khusus 2: Jika u = x^2 dan v = x + konstanta (u'=2x, v'=1)
+                else if (uRaw.equals("x^2") && vDash.equals("1")) {
+                    if (vRaw.contains("+")) {
+                        String c = vRaw.substring(vRaw.indexOf("+") + 1);
+                        pembilangFinal = "x^2+2*" + c + "*x";
+                    } else if (vRaw.contains("-")) {
+                        String c = vRaw.substring(vRaw.indexOf("-") + 1);
+                        pembilangFinal = "x^2-2*" + c + "*x";
+                    }
+                }
+                // Standar Fallback Rumus Asli
+                else {
+                    pembilangFinal = "((" + uDash + ")*(" + vRaw + ")-(" + uRaw + ")*(" + vDash + "))";
+                }
+
+                String penyebutFinal = "(" + vRaw + ")^2";
+                String hasilFinal = pembilangFinal + "/" + penyebutFinal;
+
+                hasilFinal = hasilFinal.replace("*(1)", "")
+                        .replace("(1)*", "")
+                        .replace("2*1*x", "2*x")
+                        .replace("2*1.0*x", "2*x");
+
+                return hasilFinal;
+            }
+        }
+
+        // Jalur Pemrosesan Polinomial Standar Penjumlahan/Pengurangan
         if (!e.startsWith("-") && !e.startsWith("+")) e = "+" + e;
 
         List<String> sukuList  = new ArrayList<>();
@@ -413,7 +405,8 @@ public class TurunanFragment extends Fragment {
                 hasil.append(d);
             }
         }
-        return hasil.length() == 0 ? "0" : hasil.toString();
+
+        return hasil.toString().length() == 0 ? "0" : hasil.toString();
     }
 
     private String turunkanSuku(String suku, String sgn) {
@@ -431,7 +424,7 @@ public class TurunanFragment extends Fragment {
             String kStr = suku.replace("x", "").replace("*", "");
             return formatDouble(parseKoef(kStr) * sign);
         }
-        return null; // konstanta → 0
+        return null;
     }
 
     private double parseKoef(String s) {
@@ -464,9 +457,6 @@ public class TurunanFragment extends Fragment {
         return String.format("%.10f", d).replaceAll("0+$", "").replaceAll("\\.$", "");
     }
 
-    // =========================================================
-    // EVAL NUMERIK — tidak diubah dari kode lama kamu
-    // =========================================================
     private String normalizeExpr(String e) {
         return e.replace("×", "*")
                 .replace("÷", "/")
@@ -545,68 +535,44 @@ public class TurunanFragment extends Fragment {
         }.parse();
     }
 
-    // =========================================================
-    // GRAFIK — tidak diubah dari kode lama kamu
-    // =========================================================
     private void setupChart(View view) {
-
         lineChart.getDescription().setEnabled(false);
-
-        // TAMBAHAN
         lineChart.setDrawGridBackground(false);
         lineChart.setBackgroundColor(Color.WHITE);
-
         lineChart.setTouchEnabled(true);
         lineChart.setDragEnabled(true);
         lineChart.setScaleEnabled(true);
         lineChart.setPinchZoom(true);
-
         lineChart.getLegend().setEnabled(false);
+        lineChart.setNoDataText("Tidak Ada Grafik");
 
-        lineChart.setNoDataText("Masukkan fungsi lalu tekan Hitung Turunan");
-
-        // X Axis
         XAxis xAxis = lineChart.getXAxis();
         xAxis.setPosition(XAxis.XAxisPosition.BOTTOM);
-
         xAxis.setDrawGridLines(true);
         xAxis.setGridColor(Color.parseColor("#EEEEEE"));
-
-        xAxis.setAxisLineColor(Color.parseColor("#9CA3AF"));
+        xAxis.setAxisLineColor(Color.parseColor("#374151"));
+        xAxis.setAxisLineWidth(2f);
         xAxis.setTextColor(Color.GRAY);
-
-        // TAMBAHAN
         xAxis.setTextSize(11f);
 
-        // Y Axis kiri
         YAxis leftAxis = lineChart.getAxisLeft();
-
         leftAxis.setDrawGridLines(true);
         leftAxis.setGridColor(Color.parseColor("#EEEEEE"));
-
-        leftAxis.setAxisLineColor(Color.parseColor("#9CA3AF"));
+        leftAxis.setAxisLineColor(Color.parseColor("#374151"));
+        leftAxis.setAxisLineWidth(2f);
         leftAxis.setTextColor(Color.GRAY);
-
-        // TAMBAHAN
         leftAxis.setTextSize(11f);
-
-        // RANGE BIAR GRAFIK ENAK
         leftAxis.setAxisMinimum(-20f);
         leftAxis.setAxisMaximum(40f);
 
         lineChart.getAxisRight().setEnabled(false);
-
-        // TAMBAHAN
         lineChart.setExtraOffsets(8f, 8f, 8f, 16f);
 
         Button btnZoomIn  = view.findViewById(R.id.btnZoomIn);
         Button btnZoomOut = view.findViewById(R.id.btnZoomOut);
 
-        if (btnZoomIn != null)
-            btnZoomIn.setOnClickListener(v -> lineChart.zoomIn());
-
-        if (btnZoomOut != null)
-            btnZoomOut.setOnClickListener(v -> lineChart.zoomOut());
+        if (btnZoomIn != null)  btnZoomIn.setOnClickListener(v -> lineChart.zoomIn());
+        if (btnZoomOut != null) btnZoomOut.setOnClickListener(v -> lineChart.zoomOut());
     }
 
     private void plotGrafik(String fxExpr, String dfxExpr) {
