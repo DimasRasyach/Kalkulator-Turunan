@@ -9,7 +9,6 @@ import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
-import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
@@ -18,7 +17,13 @@ import androidx.annotation.Nullable;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
+import androidx.core.widget.NestedScrollView;
 import androidx.fragment.app.Fragment;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
+
+import java.util.ArrayList;
+import java.util.List;
 
 import com.github.mikephil.charting.charts.LineChart;
 import com.github.mikephil.charting.components.XAxis;
@@ -27,25 +32,18 @@ import com.github.mikephil.charting.data.Entry;
 import com.github.mikephil.charting.data.LineData;
 import com.github.mikephil.charting.data.LineDataSet;
 
-import java.util.ArrayList;
-
 public class LimitFragment extends Fragment {
 
     private EditText inputFunction, inputLimitValue, activeInput;
-    private TextView txtHasil, txtHasilAkhir, txtLimitLabel;
-    private Button btnHitung;
+    private TextView txtHasil, txtLimitLabel;
     private ImageButton btnClear;
     private LineChart lineChart;
     private LinearLayout keyboardPanel;
     private View btnHideKeyboard;
+    private NestedScrollView nestedScrollView;
 
-    private LinearLayout[] stepHeaders = new LinearLayout[3];
-    private TextView[]     stepTitles   = new TextView[3];
-    private TextView[]     stepSubtitles= new TextView[3];
-    private TextView[]     stepFormulas = new TextView[3];
-    private TextView[]     stepDetails  = new TextView[3];
-    private ImageView[]    stepArrows   = new ImageView[3];
-    private boolean[]      stepExpanded = {false, false, false};
+    private RecyclerView rvSteps;
+    private StepAdapter  stepAdapter;
 
     @Nullable
     @Override
@@ -57,43 +55,33 @@ public class LimitFragment extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
         bindViews(view);
+        setupRecyclerView();
         setupKeyboard(view);
-        setupChart();
+        setupChart(view);          // <-- sekarang terima View untuk binding zoom button
         setupButtons(view);
+        setupKeyboardSticky();
         fixInsets(view);
-        setupStepAccordion();
     }
 
     private void bindViews(View v) {
         inputFunction   = v.findViewById(R.id.inputFunction);
         inputLimitValue = v.findViewById(R.id.inputLimitValue);
-        
+
         // KUNCI MATI KEYBOARD BAWAAN HP
         inputFunction.setShowSoftInputOnFocus(false);
         inputLimitValue.setShowSoftInputOnFocus(false);
 
         txtHasil        = v.findViewById(R.id.txtHasil);
-        txtHasilAkhir   = v.findViewById(R.id.txtHasilAkhir);
         txtLimitLabel   = v.findViewById(R.id.txtLimitLabel);
-        btnHitung       = v.findViewById(R.id.btnHitung);
         btnClear        = v.findViewById(R.id.btnClear);
         lineChart       = v.findViewById(R.id.lineChart);
         keyboardPanel   = v.findViewById(R.id.keyboardPanel);
         btnHideKeyboard = v.findViewById(R.id.btnHideKeyboard);
-
-        for (int i = 0; i < 3; i++) {
-            int n = i + 1;
-            stepHeaders[i]  = v.findViewById(getResources().getIdentifier("step"+n+"Header", "id", getContext().getPackageName()));
-            stepTitles[i]   = v.findViewById(getResources().getIdentifier("step"+n+"Title", "id", getContext().getPackageName()));
-            stepSubtitles[i]= v.findViewById(getResources().getIdentifier("step"+n+"Subtitle", "id", getContext().getPackageName()));
-            stepFormulas[i] = v.findViewById(getResources().getIdentifier("step"+n+"Formula", "id", getContext().getPackageName()));
-            stepDetails[i]  = v.findViewById(getResources().getIdentifier("step"+n+"Detail", "id", getContext().getPackageName()));
-            stepArrows[i]   = v.findViewById(getResources().getIdentifier("step"+n+"Arrow", "id", getContext().getPackageName()));
-        }
+        nestedScrollView= v.findViewById(R.id.nestedScrollView);
+        rvSteps         = v.findViewById(R.id.rvSteps);
     }
 
     private void setupButtons(View root) {
-        btnHitung.setOnClickListener(v -> prosesHitungCerdas());
         View btnBottom = root.findViewById(R.id.btnHitungBottom);
         if (btnBottom != null) btnBottom.setOnClickListener(v -> prosesHitungCerdas());
         btnClear.setOnClickListener(v -> resetAll());
@@ -116,18 +104,16 @@ public class LimitFragment extends Fragment {
         try {
             String dfx = hitungHasilTurunan(fx);
             txtHasil.setText("f'(x) = " + dfx);
-            txtHasilAkhir.setText(dfx);
             txtLimitLabel.setText("h→0");
 
             String fx_h = fx.replace("x", "(x+h)");
-            String[] t = {"Definisi Turunan", "Substitusi (x+h)", "Hasil Akhir (h→0)"};
-            String[] s = {"Gambar 1", "f(x+h) - f(x)", "Diferensial Aljabar"};
-            String[] f = {"Rumus Gambar 10", "lim [ "+fx_h+" - f(x) ] / h", "= " + dfx};
-            String[] d = {"Langkah awal menggunakan rumus turunan melalui limit sesuai Gambar 10.", 
-                          "Ganti x dengan (x+h), jabarkan perkalian, kemudian kurangi dengan f(x).", 
-                          "Suku f(x) habis. Bagi sisa pembilang dengan h, lalu masukkan h = 0."};
-            setStepData(t, s, f, d);
-            plotGrafik(normalizeExpr(fx), 0, dfx);
+            List<Stepmodel> steps = new ArrayList<>();
+            steps.add(new Stepmodel(1, "Definisi Turunan",       "f'(x) = lim[h→0] [f(x+h)-f(x)]/h", "Langkah awal menggunakan rumus turunan melalui limit sesuai definisi turunan."));
+            steps.add(new Stepmodel(2, "Substitusi (x+h)",       "lim [ "+fx_h+" - f(x) ] / h",       "Ganti x dengan (x+h), jabarkan perkalian, kemudian kurangi dengan f(x)."));
+            steps.add(new Stepmodel(3, "Hasil Akhir (h→0)",      "f'(x) = " + dfx,                    "Suku f(x) habis. Bagi sisa pembilang dengan h, lalu masukkan h = 0."));
+            stepAdapter.submitList(steps);
+
+            plotGrafik(normalizeExpr(fx), 0, dfx, false, false);
         } catch (Exception e) { txtHasil.setText("Error"); }
     }
 
@@ -135,96 +121,179 @@ public class LimitFragment extends Fragment {
         try {
             double a = evalEkspresi(normalizeExpr(aStr));
             String fNorm = normalizeExpr(fx);
-            
-            // Cek 0/0
+
             double yDirect = evalDenganX(fNorm, a);
             String hasil;
+            List<Stepmodel> steps = new ArrayList<>();
+            boolean isIndeterminate = false;
 
-            if (Double.isNaN(yDirect) || Math.abs(yDirect) < 1e-6 && fx.contains("/")) {
+            if (Double.isNaN(yDirect) || Double.isInfinite(yDirect) || (Math.abs(yDirect) < 1e-6 && fx.contains("/"))) {
+                isIndeterminate = true;
                 double lim = (evalDenganX(fNorm, a + 0.0001) + evalDenganX(fNorm, a - 0.0001)) / 2.0;
                 hasil = formatHasil(lim);
                 if (fx.contains("√")) {
-                    String[] t={"Bentuk Akar", "Rasionalisasi", "Hasil Limit"};
-                    String[] s={"Gambar 12", "Kali Sekawan", "Evaluasi x="+aStr};
-                    String[] f={"√f - √g", "f(x) * sekawan", "= "+hasil};
-                    String[] d={"Substitusi langsung 0/0. Gunakan Metode Gambar 12 Metode B.", "Kalikan pembilang & penyebut dengan akar sekawan.", "Sederhanakan dan masukkan x="+aStr+"."};
-                    setStepData(t, s, f, d);
+                    steps.add(new Stepmodel(1, "Bentuk Akar",    "0/0 → Kalikan Sekawan",         "Substitusi langsung menghasilkan 0/0. Gunakan metode rasionalisasi."));
+                    steps.add(new Stepmodel(2, "Rasionalisasi",  "f(x)·sekawan / g(x)·sekawan",   "Kalikan pembilang & penyebut dengan akar sekawan."));
+                    steps.add(new Stepmodel(3, "Hasil Limit",    "lim x→"+aStr+" = "+hasil,       "Sederhanakan dan masukkan x="+aStr+"."));
                 } else {
-                    String[] t={"Bentuk Pangkat", "Faktorisasi", "Hasil Limit"};
-                    String[] s={"Gambar 12", "Coret (x-a)", "Evaluasi x="+aStr};
-                    String[] f={"0 / 0", "lim H(x)/P(x)", "= "+hasil};
-                    String[] d={"Substitusi langsung 0/0. Gunakan Metode Gambar 12 Metode A.", "Faktorkan pembilang/penyebut untuk mencoret faktor nol.", "Dapatkan hasil limit "+hasil+"."};
-                    setStepData(t, s, f, d);
+                    steps.add(new Stepmodel(1, "Bentuk Pangkat", "0/0 → Faktorkan",               "Substitusi langsung menghasilkan 0/0. Faktorkan untuk mengeliminasi nol."));
+                    steps.add(new Stepmodel(2, "Faktorisasi",    "lim H(x)/P(x) → coret (x−a)",   "Faktorkan pembilang/penyebut untuk mencoret faktor nol."));
+                    steps.add(new Stepmodel(3, "Hasil Limit",    "lim x→"+aStr+" = "+hasil,       "Dapatkan hasil limit "+hasil+"."));
                 }
             } else {
                 hasil = formatHasil(yDirect);
-                String[] t={"Teorema Limit", "Substitusi", "Hasil Akhir"};
-                String[] s={"Gambar 5", "Masukkan x="+aStr, "Selesai"};
-                String[] f={"lim f(x)=f(a)", "f("+aStr+")", "= "+hasil};
-                String[] d={"Limit kontinu. Berdasarkan Gambar 5, cukup substitusi langsung.", "Ganti x dengan "+aStr+" ke fungsi asli.", "Didapatkan hasil akhir "+hasil+"."};
-                setStepData(t, s, f, d);
+                steps.add(new Stepmodel(1, "Teorema Limit",  "lim x→a f(x) = f(a)",   "Limit kontinu. Fungsi kontinu di x="+aStr+", cukup substitusi langsung."));
+                steps.add(new Stepmodel(2, "Substitusi",     "f("+aStr+")",            "Ganti x dengan "+aStr+" ke fungsi asli."));
+                steps.add(new Stepmodel(3, "Hasil Akhir",    "lim x→"+aStr+" = "+hasil,"Didapatkan hasil akhir "+hasil+"."));
             }
+            stepAdapter.submitList(steps);
 
             txtHasil.setText("lim x→" + aStr + " (" + fx + ") = " + hasil);
-            txtHasilAkhir.setText(hasil);
             txtLimitLabel.setText("x→" + aStr);
-            plotGrafik(fNorm, a, hasil);
+            plotGrafik(fNorm, a, hasil, true, isIndeterminate);
         } catch (Exception e) { txtHasil.setText("Error"); }
     }
 
-    private void setupChart() {
+    // =========================================================
+    // GRAFIK — disamakan dengan TurunanFragment
+    // + zoom button binding
+    // + garis kartesius (axis line) di-bold (lineWidth lebih tebal)
+    // =========================================================
+    private void setupChart(View view) {
         lineChart.getDescription().setEnabled(false);
         lineChart.getLegend().setEnabled(false);
+
         lineChart.setDrawGridBackground(false);
         lineChart.setBackgroundColor(Color.WHITE);
+
+        lineChart.setTouchEnabled(true);
+        lineChart.setDragEnabled(true);
+        lineChart.setScaleEnabled(true);
+        lineChart.setPinchZoom(true);
+
+        lineChart.setNoDataText("Tidak Ada Grafik");
+        lineChart.setExtraOffsets(8f, 8f, 8f, 16f);
+
+        // ---- X Axis ----
         XAxis xAxis = lineChart.getXAxis();
         xAxis.setPosition(XAxis.XAxisPosition.BOTTOM);
         xAxis.setDrawGridLines(true);
-        xAxis.setGridColor(Color.parseColor("#F3F4F6"));
-        lineChart.getAxisLeft().setDrawGridLines(true);
-        lineChart.getAxisLeft().setGridColor(Color.parseColor("#F3F4F6"));
+        xAxis.setGridColor(Color.parseColor("#EEEEEE"));
+        xAxis.setTextColor(Color.GRAY);
+        xAxis.setTextSize(11f);
+
+        // Bold garis kartesius sumbu X
+        xAxis.setAxisLineColor(Color.parseColor("#374151"));
+        xAxis.setAxisLineWidth(2f);           // <-- BOLD
+
+        // ---- Y Axis kiri ----
+        YAxis leftAxis = lineChart.getAxisLeft();
+        leftAxis.setDrawGridLines(true);
+        leftAxis.setGridColor(Color.parseColor("#EEEEEE"));
+        leftAxis.setTextColor(Color.GRAY);
+        leftAxis.setTextSize(11f);
+
+        // Bold garis kartesius sumbu Y
+        leftAxis.setAxisLineColor(Color.parseColor("#374151"));
+        leftAxis.setAxisLineWidth(2f);        // <-- BOLD
+
+        leftAxis.setAxisMinimum(-20f);
+        leftAxis.setAxisMaximum(40f);
+
         lineChart.getAxisRight().setEnabled(false);
+
+        // ---- Zoom Buttons (sama seperti TurunanFragment) ----
+        Button btnZoomIn  = view.findViewById(R.id.btnZoomIn);
+        Button btnZoomOut = view.findViewById(R.id.btnZoomOut);
+
+        if (btnZoomIn  != null) btnZoomIn.setOnClickListener(v -> lineChart.zoomIn());
+        if (btnZoomOut != null) btnZoomOut.setOnClickListener(v -> lineChart.zoomOut());
     }
 
     private void plotGrafik(String f, double a, String resStr) {
+        plotGrafik(f, a, resStr, true, false);
+    }
+
+    // hollowDot=true  → titik berlubang (kasus 0/0, fungsi tidak terdefinisi di x=a)
+    // hollowDot=false → titik solid merah (fungsi kontinu di x=a)
+    private void plotGrafik(String f, double a, String resStr, boolean showDot, boolean hollowDot) {
+
+        // === FIX 1: range X diperlebar ±10 dari titik a, step 0.1 ===
         ArrayList<Entry> pts = new ArrayList<>();
-        for (int i = -30; i <= 30; i++) {
-            float x = (float)a + (i / 10f);
+        for (int i = -100; i <= 100; i++) {
+            double x = a + (i / 10.0);
+            // skip tepat di titik a untuk kasus tidak terdefinisi
+            if (hollowDot && Math.abs(x - a) < 1e-9) continue;
             double y = evalDenganX(f, x);
-            if (!Double.isNaN(y) && Math.abs(y) < 500) pts.add(new Entry(x, (float)y));
+            if (!Double.isNaN(y) && !Double.isInfinite(y) && Math.abs(y) < 1000)
+                pts.add(new Entry((float) x, (float) y));
         }
+
         LineDataSet ds = new LineDataSet(pts, "f(x)");
-        ds.setColor(0xFF1D4FFF); ds.setLineWidth(3f); ds.setDrawCircles(false); ds.setDrawValues(false);
+        ds.setColor(0xFF1D4FFF);
+        ds.setLineWidth(2.5f);
+        ds.setDrawCircles(false);
+        ds.setDrawValues(false);
         ds.setMode(LineDataSet.Mode.CUBIC_BEZIER);
 
         LineData data = new LineData(ds);
-        try {
-            float resY = Float.parseFloat(resStr.replace(",", "."));
-            ArrayList<Entry> dot = new ArrayList<>(); dot.add(new Entry((float)a, resY));
-            LineDataSet dsDot = new LineDataSet(dot, "P");
-            dsDot.setCircleColor(Color.RED); dsDot.setCircleRadius(6f); dsDot.setDrawValues(false);
-            data.addDataSet(dsDot);
-        } catch (Exception ignored) {}
-        
+
+        if (showDot) {
+            try {
+                float resY = Float.parseFloat(resStr.replace(",", "."));
+                ArrayList<Entry> dot = new ArrayList<>();
+                dot.add(new Entry((float) a, resY));
+                LineDataSet dsDot = new LineDataSet(dot, "P");
+
+                if (hollowDot) {
+                    // === FIX 2: titik BERLUBANG untuk kasus 0/0 ===
+                    dsDot.setCircleColor(Color.RED);
+                    dsDot.setCircleRadius(7f);
+                    dsDot.setDrawCircleHole(true);          // lubang di tengah
+                    dsDot.setCircleHoleColor(Color.WHITE);  // warna lubang = putih
+                    dsDot.setCircleHoleRadius(4f);
+                } else {
+                    // titik SOLID untuk fungsi kontinu
+                    dsDot.setCircleColor(Color.RED);
+                    dsDot.setCircleRadius(6f);
+                    dsDot.setDrawCircleHole(false);
+                }
+                dsDot.setDrawValues(false);
+                dsDot.setLineWidth(0f);
+                data.addDataSet(dsDot);
+            } catch (Exception ignored) {}
+        }
+
         lineChart.setData(data);
         lineChart.animateX(600);
         lineChart.invalidate();
     }
 
-    private void setStepData(String[] t, String[] s, String[] f, String[] d) {
-        for (int i = 0; i < 3; i++) {
-            stepTitles[i].setText(t[i]); stepSubtitles[i].setText(s[i]);
-            stepFormulas[i].setText(f[i]); stepDetails[i].setText(d[i]);
-            stepDetails[i].setVisibility(View.GONE); stepExpanded[i] = false;
-            stepArrows[i].setRotation(0f);
-        }
+    private void setupRecyclerView() {
+        stepAdapter = new StepAdapter();
+        rvSteps.setAdapter(stepAdapter);
+        rvSteps.setLayoutManager(new LinearLayoutManager(requireContext()));
+        rvSteps.setNestedScrollingEnabled(false);
+        rvSteps.setHasFixedSize(false);
+    }
+
+    private void setupKeyboardSticky() {
+        keyboardPanel.post(() -> {
+            int kbHeight = keyboardPanel.getHeight();
+            nestedScrollView.setPadding(
+                    nestedScrollView.getPaddingLeft(),
+                    nestedScrollView.getPaddingTop(),
+                    nestedScrollView.getPaddingRight(),
+                    kbHeight
+            );
+        });
     }
 
     private void setupKeyboard(View v) {
         activeInput = inputFunction;
-        inputFunction.setOnClickListener(v1 -> { activeInput = inputFunction; keyboardPanel.setVisibility(View.VISIBLE); });
-        inputLimitValue.setOnClickListener(v1 -> { activeInput = inputLimitValue; keyboardPanel.setVisibility(View.VISIBLE); });
-        btnHideKeyboard.setOnClickListener(v1 -> keyboardPanel.setVisibility(View.GONE));
+        inputFunction.setOnClickListener(v1 -> { activeInput = inputFunction; showCustomKeyboard(); });
+        inputLimitValue.setOnClickListener(v1 -> { activeInput = inputLimitValue; showCustomKeyboard(); });
+        btnHideKeyboard.setOnClickListener(v1 -> hideCustomKeyboard());
         int[] ids = {R.id.btnSin, R.id.btnCos, R.id.btnTan, R.id.btnLn, R.id.btnLog, R.id.btnSqrt, R.id.btnSquare, R.id.btnPow, R.id.btnPi, R.id.btnE,
                 R.id.btn7, R.id.btn8, R.id.btn9, R.id.btnDivide, R.id.btn4, R.id.btn5, R.id.btn6, R.id.btnMultiply, R.id.btnCaret, R.id.btn1, R.id.btn2, R.id.btn3, R.id.btnMinus, R.id.btnOpenParen,
                 R.id.btn0, R.id.btnDot, R.id.btnCloseParen, R.id.btnPlus, R.id.btnX};
@@ -239,28 +308,51 @@ public class LimitFragment extends Fragment {
     }
 
     private void resetAll() {
-        inputFunction.setText(""); inputLimitValue.setText(""); txtHasil.setText(""); txtHasilAkhir.setText("");
-        lineChart.clear(); txtLimitLabel.setText("x→a");
-        for(int i=0; i<3; i++) { stepTitles[i].setText(""); stepSubtitles[i].setText(""); stepFormulas[i].setText(""); stepDetails[i].setText(""); stepDetails[i].setVisibility(View.GONE); }
+        inputFunction.setText("");
+        inputLimitValue.setText("");
+        txtHasil.setText("");
+        lineChart.clear();
+        txtLimitLabel.setText("x→a");
+        stepAdapter.submitList(new ArrayList<>());
     }
 
-    private void setupStepAccordion() {
-        for (int i = 0; i < 3; i++) {
-            final int idx = i;
-            if (stepHeaders[i] != null) {
-                stepHeaders[i].setOnClickListener(v -> {
-                    stepExpanded[idx] = !stepExpanded[idx];
-                    stepDetails[idx].setVisibility(stepExpanded[idx] ? View.VISIBLE : View.GONE);
-                    stepArrows[idx].setRotation(stepExpanded[idx] ? 180f : 0f);
-                });
-            }
-        }
+    private void showCustomKeyboard() {
+        keyboardPanel.setVisibility(View.VISIBLE);
+        keyboardPanel.post(() -> {
+            int kbHeight = keyboardPanel.getHeight();
+            nestedScrollView.setPadding(
+                    nestedScrollView.getPaddingLeft(),
+                    nestedScrollView.getPaddingTop(),
+                    nestedScrollView.getPaddingRight(),
+                    kbHeight
+            );
+        });
     }
 
-    private void hideCustomKeyboard() { keyboardPanel.setVisibility(View.GONE); }
-    private void fixInsets(View v) { ViewCompat.setOnApplyWindowInsetsListener(v, (v1, in) -> { Insets nav = in.getInsets(WindowInsetsCompat.Type.navigationBars()); keyboardPanel.setPadding(keyboardPanel.getPaddingLeft(), keyboardPanel.getPaddingTop(), keyboardPanel.getPaddingRight(), nav.bottom + 12); return in; }); }
+    private void hideCustomKeyboard() {
+        keyboardPanel.setVisibility(View.GONE);
+        nestedScrollView.setPadding(
+                nestedScrollView.getPaddingLeft(),
+                nestedScrollView.getPaddingTop(),
+                nestedScrollView.getPaddingRight(),
+                0
+        );
+    }
+
+    private void fixInsets(View v) {
+        ViewCompat.setOnApplyWindowInsetsListener(v, (v1, in) -> {
+            Insets nav = in.getInsets(WindowInsetsCompat.Type.navigationBars());
+            keyboardPanel.setPadding(keyboardPanel.getPaddingLeft(), keyboardPanel.getPaddingTop(), keyboardPanel.getPaddingRight(), nav.bottom + 12);
+            keyboardPanel.post(() -> {
+                int kbHeight = keyboardPanel.getHeight();
+                nestedScrollView.setPadding(nestedScrollView.getPaddingLeft(), nestedScrollView.getPaddingTop(), nestedScrollView.getPaddingRight(), kbHeight);
+            });
+            return in;
+        });
+    }
+
     private String hitungHasilTurunan(String expr) {
-        String e = expr.replace(" ", "").replace("−", "-").replace("²", "^2");
+        String e = expr.replace(" ", "").replace("−", "-").replace("²", "^2").replace("³", "^3");
         if (!e.startsWith("-") && !e.startsWith("+")) e = "+" + e;
         StringBuilder res = new StringBuilder();
         String[] terms = e.split("(?=[+-])");
@@ -269,20 +361,39 @@ public class LimitFragment extends Fragment {
             double sign = t.startsWith("-") ? -1 : 1;
             String s = t.substring(1);
             double k, p;
-            if (s.contains("x^2") || s.contains("x²")) { k = (s.replace("x^2","").replace("x²","").isEmpty())?1:Double.parseDouble(s.replace("x^2","").replace("x²","")); p=2; }
-            else { k = s.replace("x","").isEmpty()?1:Double.parseDouble(s.replace("x","")); p=1; }
-            double nk = k * p * sign; double np = p - 1;
-            String d = (np==0) ? formatHasil(nk) : formatHasil(nk)+"x";
-            if (res.length()>0 && !d.startsWith("-")) res.append("+");
+            if (s.contains("x^")) {
+                String[] parts = s.split("x\\^");
+                k = (parts[0].isEmpty() || parts[0].equals("+")) ? 1 :
+                        parts[0].equals("-") ? -1 : Double.parseDouble(parts[0]);
+                p = Double.parseDouble(parts[1]);
+            } else {
+                String kStr = s.replace("x", "").replace("*", "");
+                k = kStr.isEmpty() ? 1 : Double.parseDouble(kStr);
+                p = 1;
+            }
+            double nk = k * p * sign;
+            double np = p - 1;
+            String d;
+            if (np == 0) {
+                d = formatHasil(nk);
+            } else if (np == 1) {
+                d = formatHasil(nk) + "x";
+            } else {
+                d = formatHasil(nk) + "x^" + formatHasil(np);
+            }
+            if (res.length() > 0 && !d.startsWith("-")) res.append("+");
             res.append(d);
         }
-        return res.toString();
+        return res.length() == 0 ? "0" : res.toString();
     }
+
     private double evalDenganX(String e, double x) { return evalEkspresi(e.replaceAll("(?<![a-z])x(?![a-z])", "("+x+")")); }
+
     private String normalizeExpr(String e) {
         String res = e.replace("×", "*").replace("÷", "/").replace("−", "-").replace("²", "^2").replace("³", "^3").replace("√(", "sqrt(").replace("√", "sqrt").replace("π", String.valueOf(Math.PI)).replaceAll("(?<![a-zA-Z])e(?![a-zA-Z])", String.valueOf(Math.E));
         return res.replaceAll("(\\d)(x)", "$1*$2").replaceAll("(\\d)(\\()", "$1*$2").replaceAll("(\\))(x)", "$1*$2").replaceAll("(\\))(\\()", "$1*$2");
     }
+
     private double evalEkspresi(String expr) {
         return new Object() {
             int pos = -1, ch; void nextChar() { ch = (++pos < expr.length()) ? expr.charAt(pos) : -1; }
@@ -304,5 +415,6 @@ public class LimitFragment extends Fragment {
             }
         }.parse();
     }
+
     private String formatHasil(double d) { if(Double.isNaN(d)) return "−"; if(d==(long)d) return String.valueOf((long)d); return String.format("%.2f", d).replaceAll("0+$","").replaceAll("\\.$",""); }
 }
