@@ -93,11 +93,52 @@ public class LimitFragment extends Fragment {
         if (fx.isEmpty()) return;
 
         if (TextUtils.isEmpty(aVal)) {
-            hitungLimitTurunan(fx);
+            hitungLimitTurunan(fx);       // x→a kosong → turunan fungsi f'(x)
         } else {
-            hitungLimitAljabar(fx, aVal);
+            hitungTurunanDiTitik(fx, aVal); // x→a diisi → turunkan dulu, baru substitusi
         }
         hideCustomKeyboard();
+    }
+
+    // METHOD BARU — ganti hitungLimitAljabar
+    private void hitungTurunanDiTitik(String fx, String aStr) {
+        try {
+            double a = evalEkspresi(normalizeExpr(aStr));
+
+            // 1. Turunkan dulu
+            DerivativeEngine engine = new DerivativeEngine();
+            DerivativeEngine.Result result = engine.differentiate(fx);
+            String dfx = result.derivativeStr;
+
+            // 2. Substitusi x=a ke f'(x)
+            String dfxNorm = normalizeExpr(dfx);
+            double nilaiDfxA = evalDenganX(dfxNorm, a);
+            String hasil = formatHasil(nilaiDfxA);
+
+            // 3. Tampilkan hasil
+            txtHasil.setText("f'(" + aStr + ") = " + hasil);
+            txtLimitLabel.setText("x→" + aStr);
+
+            // 4. Langkah penyelesaian
+            List<Stepmodel> steps = new ArrayList<>();
+            steps.add(new Stepmodel(1, "Turunkan f(x)",
+                    "f(x) = " + fx,
+                    "Turunkan fungsi menggunakan aturan turunan."));
+            steps.add(new Stepmodel(2, "Hasil Turunan",
+                    "f'(x) = " + dfx,
+                    "Hasil turunan dari f(x) = " + fx + "."));
+            steps.add(new Stepmodel(3, "Substitusi x = " + aStr,
+                    "f'(" + aStr + ") = " + dfx.replace("x", "(" + aStr + ")"),
+                    "Masukkan x = " + aStr + " ke dalam f'(x)."));
+            steps.add(new Stepmodel(4, "Hasil Akhir",
+                    "f'(" + aStr + ") = " + hasil,
+                    "Nilai turunan di titik x = " + aStr + " adalah " + hasil + "."));
+            stepAdapter.submitList(steps);
+
+            // 5. Plot grafik f(x) dan f'(x)
+            plotGrafik(normalizeExpr(fx), a, hasil, true, false);
+
+        } catch (Exception e) { txtHasil.setText("Error"); }
     }
 
     private void hitungLimitTurunan(String fx) {
@@ -109,8 +150,9 @@ public class LimitFragment extends Fragment {
             String fx_h = fx.replace("x", "(x+h)");
 
             List<Stepmodel> steps = new ArrayList<>();
-            steps.add(new Stepmodel(1, "Definisi Turunan",   "Rumus Gambar 10",
-                    "Langkah awal menggunakan rumus turunan melalui limit sesuai Gambar 10."));
+            steps.add(new Stepmodel(1, "Definisi Turunan",
+                    "f'(x) = lim(h→0) [f(x+h) − f(x)] / h",
+                    "Langkah awal menggunakan definisi turunan melalui limit. Ganti f(x) dengan fungsi yang diberikan."));
             steps.add(new Stepmodel(2, "Substitusi (x+h)",   "lim [ " + fx_h + " - f(x) ] / h",
                     "Ganti x dengan (x+h), jabarkan perkalian, kemudian kurangi dengan f(x)."));
             steps.add(new Stepmodel(3, "Hasil Akhir (h→0)",  "= " + dfx,
@@ -282,7 +324,7 @@ public class LimitFragment extends Fragment {
         int[] ids = {R.id.btnSin, R.id.btnCos, R.id.btnTan, R.id.btnLn, R.id.btnLog, R.id.btnSqrt, R.id.btnSquare, R.id.btnPow, R.id.btnPi, R.id.btnE,
                 R.id.btn7, R.id.btn8, R.id.btn9, R.id.btnDivide, R.id.btn4, R.id.btn5, R.id.btn6, R.id.btnMultiply, R.id.btnCaret, R.id.btn1, R.id.btn2, R.id.btn3, R.id.btnMinus, R.id.btnOpenParen,
                 R.id.btn0, R.id.btnDot, R.id.btnCloseParen, R.id.btnPlus, R.id.btnX};
-        String[] vals = {"sin(", "cos(", "tan(", "ln(", "log(", "√(", "²", "^", "π", "e", "7", "8", "9", "/", "4", "5", "6", "*", "/", "1", "2", "3", "-", "(", "0", ".", ")", "+", "x"};
+        String[] vals = {"sin(", "cos(", "tan(", "ln(", "log(", "√(", "²", "^", "π", "e", "7", "8", "9", "/", "4", "5", "6", "×", "/", "1", "2", "3", "-", "(", "0", ".", ")", "+", "x"};
         for (int i = 0; i < ids.length; i++) {
             final String val = vals[i];
             v.findViewById(ids[i]).setOnClickListener(v1 -> { activeInput.getText().insert(activeInput.getSelectionStart(), val); });
@@ -336,43 +378,17 @@ public class LimitFragment extends Fragment {
         });
     }
 
-    private String hitungHasilTurunan(String expr) {
-        String e = expr.replace(" ", "").replace("−", "-").replace("²", "^2").replace("³", "^3");
-        if (!e.startsWith("-") && !e.startsWith("+")) e = "+" + e;
-        StringBuilder res = new StringBuilder();
-        String[] terms = e.split("(?=[+-])");
-        for (String t : terms) {
-            if (!t.contains("x")) continue;
-            double sign = t.startsWith("-") ? -1 : 1;
-            String s = t.substring(1);
-            double k, p;
-            if (s.contains("x^")) {
-                String[] parts = s.split("x\\^");
-                k = (parts[0].isEmpty() || parts[0].equals("+")) ? 1 :
-                        parts[0].equals("-") ? -1 : Double.parseDouble(parts[0]);
-                p = Double.parseDouble(parts[1]);
-            } else {
-                String kStr = s.replace("x", "").replace("*", "");
-                k = kStr.isEmpty() ? 1 : Double.parseDouble(kStr);
-                p = 1;
-            }
-            double nk = k * p * sign;
-            double np = p - 1;
-            String d;
-            if (np == 0) {
-                d = formatHasil(nk);
-            } else if (np == 1) {
-                d = formatHasil(nk) + "x";
-            } else {
-                d = formatHasil(nk) + "x^" + formatHasil(np);
-            }
-            if (res.length() > 0 && !d.startsWith("-")) res.append("+");
-            res.append(d);
-        }
-        return res.length() == 0 ? "0" : res.toString();
+    private String hitungHasilTurunan(String fx) {
+        DerivativeEngine engine = new DerivativeEngine();
+        DerivativeEngine.Result result = engine.differentiate(fx);
+        return result.derivativeStr;
     }
 
-    private double evalDenganX(String e, double x) { return evalEkspresi(e.replaceAll("(?<![a-z])x(?![a-z])", "("+x+")")); }
+    private double evalDenganX(String fNorm, double a) {
+        DerivativeEngine engine = new DerivativeEngine();
+        DerivativeEngine.Node tree = engine.parse(fNorm);
+        return engine.evaluate(tree, a);
+    }
 
     private String normalizeExpr(String e) {
         String res = e.replace("×", "*").replace("÷", "/").replace("−", "-").replace("²", "^2").replace("³", "^3").replace("√(", "sqrt(").replace("√", "sqrt").replace("π", String.valueOf(Math.PI)).replaceAll("(?<![a-zA-Z])e(?![a-zA-Z])", String.valueOf(Math.E));
