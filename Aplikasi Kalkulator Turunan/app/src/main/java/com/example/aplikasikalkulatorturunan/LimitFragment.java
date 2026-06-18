@@ -67,7 +67,7 @@ public class LimitFragment extends Fragment {
     private void bindViews(View v) {
         inputFunction   = v.findViewById(R.id.inputFunction);
         inputLimitValue = v.findViewById(R.id.inputLimitValue);
-        
+
         // KUNCI MATI KEYBOARD BAWAAN HP
         inputFunction.setShowSoftInputOnFocus(false);
         inputLimitValue.setShowSoftInputOnFocus(false);
@@ -123,8 +123,8 @@ public class LimitFragment extends Fragment {
             String[] t = {"Definisi Turunan", "Substitusi (x+h)", "Hasil Akhir (h→0)"};
             String[] s = {"Gambar 1", "f(x+h) - f(x)", "Diferensial Aljabar"};
             String[] f = {"Rumus Gambar 10", "lim [ "+fx_h+" - f(x) ] / h", "= " + dfx};
-            String[] d = {"Langkah awal menggunakan rumus turunan melalui limit sesuai Gambar 10.", 
-                          "Ganti x dengan (x+h), jabarkan perkalian, kemudian kurangi dengan f(x).", 
+            String[] d = {"Langkah awal menggunakan rumus turunan melalui limit sesuai Gambar 10.",
+                          "Ganti x dengan (x+h), jabarkan perkalian, kemudian kurangi dengan f(x).",
                           "Suku f(x) habis. Bagi sisa pembilang dengan h, lalu masukkan h = 0."};
             setStepData(t, s, f, d);
             plotGrafik(normalizeExpr(fx), 0, dfx);
@@ -205,7 +205,7 @@ public class LimitFragment extends Fragment {
             dsDot.setCircleColor(Color.RED); dsDot.setCircleRadius(6f); dsDot.setDrawValues(false);
             data.addDataSet(dsDot);
         } catch (Exception ignored) {}
-        
+
         lineChart.setData(data);
         lineChart.animateX(600);
         lineChart.invalidate();
@@ -228,7 +228,7 @@ public class LimitFragment extends Fragment {
         int[] ids = {R.id.btnSin, R.id.btnCos, R.id.btnTan, R.id.btnLn, R.id.btnLog, R.id.btnSqrt, R.id.btnSquare, R.id.btnPow, R.id.btnPi, R.id.btnE,
                 R.id.btn7, R.id.btn8, R.id.btn9, R.id.btnDivide, R.id.btn4, R.id.btn5, R.id.btn6, R.id.btnMultiply, R.id.btnCaret, R.id.btn1, R.id.btn2, R.id.btn3, R.id.btnMinus, R.id.btnOpenParen,
                 R.id.btn0, R.id.btnDot, R.id.btnCloseParen, R.id.btnPlus, R.id.btnX};
-        String[] vals = {"sin(", "cos(", "tan(", "ln(", "log(", "√(", "²", "^", "π", "e", "7", "8", "9", "/", "4", "5", "6", "*", "^", "1", "2", "3", "-", "(", "0", ".", ")", "+", "x"};
+        String[] vals = {"sin(", "cos(", "tan(", "ln(", "log(", "√(", "²", "^", "π", "e", "7", "8", "9", "/", "4", "5", "6", "*", "/", "1", "2", "3", "-", "(", "0", ".", ")", "+", "x"};
         for (int i = 0; i < ids.length; i++) {
             final String val = vals[i];
             v.findViewById(ids[i]).setOnClickListener(v1 -> { activeInput.getText().insert(activeInput.getSelectionStart(), val); });

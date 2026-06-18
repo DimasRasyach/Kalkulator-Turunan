@@ -1,11 +1,14 @@
 package com.example.aplikasikalkulatorturunan;
 
-// TurunanFragment.java — versi refactor
-// Perubahan vs versi lama:
-//   1. Keyboard sticky: padding bawah NestedScrollView = tinggi keyboardPanel
-//   2. Langkah penyelesaian pakai RecyclerView + StepAdapter (bukan 4 card statis)
-//   3. resetAll() satu tempat untuk clear semua state
-//   4. Selebihnya (eval, turunan, grafik) tidak diubah — copy dari kode lama kamu
+// TurunanFragment.java — versi dengan DerivativeEngine (penurunan simbolik penuh)
+// Perubahan vs versi sebelumnya:
+//   1. turunkanPolinomial() diganti DerivativeEngine.differentiate()
+//      -> mendukung Power, Constant Multiple, Sum/Difference, Product,
+//         Quotient, Chain Rule, Trig, Exponential, Logarithm
+//   2. updateSteps() menampilkan SETIAP langkah dari engine (nama teorema +
+//      formula + ekspresi + penjelasan natural), bukan 4 langkah generik
+//   3. Grafik memakai DerivativeEngine.evaluate() untuk f(x) dan f'(x)
+//   4. Sisanya (keyboard, sticky panel, insets) tidak diubah
 
 import android.graphics.Color;
 import android.os.Bundle;
@@ -41,17 +44,19 @@ public class TurunanFragment extends Fragment {
 
     // Views
     private EditText         inputFunction;
-    private TextView txtHasil;
-    private Button           btnHitungBottom;
+    private TextView         txtHasil;
+    private Button            btnHitungBottom;
     private ImageButton      btnClear;
     private LineChart        lineChart;
     private NestedScrollView nestedScrollView;
     private View             keyboardPanel, btnHideKeyboard;
 
-
     // RecyclerView langkah
     private RecyclerView rvSteps;
     private StepAdapter  stepAdapter;
+
+    // Engine penurunan simbolik
+    private final DerivativeEngine engine = new DerivativeEngine();
 
     // =========================================================
     // Lifecycle
@@ -82,10 +87,8 @@ public class TurunanFragment extends Fragment {
     // =========================================================
     private void bindViews(View view) {
         inputFunction    = view.findViewById(R.id.inputFunction);
-        
-        // MATIKAN KEYBOARD SISTEM HP
         inputFunction.setShowSoftInputOnFocus(false);
-        
+
         txtHasil         = view.findViewById(R.id.txtHasil);
         btnHitungBottom  = view.findViewById(R.id.btnHitungBottom);
         btnClear         = view.findViewById(R.id.btnClear);
@@ -108,14 +111,12 @@ public class TurunanFragment extends Fragment {
         stepAdapter = new StepAdapter();
         rvSteps.setAdapter(stepAdapter);
         rvSteps.setLayoutManager(new LinearLayoutManager(requireContext()));
-        // Nonaktifkan scroll sendiri — biar NestedScrollView yang handle
         rvSteps.setNestedScrollingEnabled(false);
         rvSteps.setHasFixedSize(false);
     }
 
     // =========================================================
-    // Keyboard sticky: beri padding bawah pada NestedScrollView
-    // sebesar tinggi keyboardPanel supaya konten tidak tertutup
+    // Keyboard sticky
     // =========================================================
     private void setupKeyboardSticky() {
         keyboardPanel.post(() -> {
@@ -130,19 +131,17 @@ public class TurunanFragment extends Fragment {
     }
 
     // =========================================================
-    // System insets — hindari gesture bar HP
+    // System insets
     // =========================================================
     private void setupSystemInsets(View view) {
         ViewCompat.setOnApplyWindowInsetsListener(view, (v, insets) -> {
             Insets navInsets = insets.getInsets(WindowInsetsCompat.Type.navigationBars());
-            // Tambah padding bawah keyboardPanel sesuai gesture bar
             keyboardPanel.setPadding(
                     keyboardPanel.getPaddingLeft(),
                     keyboardPanel.getPaddingTop(),
                     keyboardPanel.getPaddingRight(),
                     navInsets.bottom
             );
-            // Update padding scroll area setelah insets diterapkan
             keyboardPanel.post(() -> {
                 int kbHeight = keyboardPanel.getHeight();
                 nestedScrollView.setPadding(
@@ -157,7 +156,7 @@ public class TurunanFragment extends Fragment {
     }
 
     // =========================================================
-    // Keyboard — sama persis dengan kode lama kamu
+    // Keyboard
     // =========================================================
     private void setupKeyboard(View view) {
         inputFunction.setOnClickListener(v -> showCustomKeyboard());
@@ -178,8 +177,8 @@ public class TurunanFragment extends Fragment {
         String[] vals = {
                 "sin(", "cos(", "tan(", "ln(",  "log(",
                 "√(",   "²",    "^",    "π",    "e",
-                "7",    "8",    "9",    "÷",
-                "4",    "5",    "6",    "×",    "^",
+                "7",    "8",    "9",    "/",
+                "4",    "5",    "6",    "×",    "/",
                 "1",    "2",    "3",    "-",    "(",
                 "0",    ".",    ")",    "+",
                 "x"
@@ -191,11 +190,9 @@ public class TurunanFragment extends Fragment {
             if (btn != null) btn.setOnClickListener(v -> appendToInput(val));
         }
 
-        // Tombol =
         Button btnEquals = view.findViewById(R.id.btnEquals);
         if (btnEquals != null) btnEquals.setOnClickListener(v -> hitungTurunan());
 
-        // Backspace
         Button btnBackspace = view.findViewById(R.id.btnBackspace);
         if (btnBackspace != null) {
             btnBackspace.setOnClickListener(v -> {
@@ -207,11 +204,9 @@ public class TurunanFragment extends Fragment {
             });
         }
 
-        // AC
         Button btnAC = view.findViewById(R.id.btnAC);
         if (btnAC != null) btnAC.setOnClickListener(v -> resetAll());
 
-        // Clear X
         btnClear.setOnClickListener(v -> inputFunction.setText(""));
     }
 
@@ -227,12 +222,11 @@ public class TurunanFragment extends Fragment {
     private void hideCustomKeyboard() {
         if (keyboardPanel != null) {
             keyboardPanel.setVisibility(View.GONE);
-            // Reset padding saat keyboard ditutup agar tidak ada ruang kosong di bawah
             nestedScrollView.setPadding(
-                nestedScrollView.getPaddingLeft(),
-                nestedScrollView.getPaddingTop(),
-                nestedScrollView.getPaddingRight(),
-                0
+                    nestedScrollView.getPaddingLeft(),
+                    nestedScrollView.getPaddingTop(),
+                    nestedScrollView.getPaddingRight(),
+                    0
             );
         }
     }
@@ -240,42 +234,44 @@ public class TurunanFragment extends Fragment {
     private void showCustomKeyboard() {
         if (keyboardPanel != null) {
             keyboardPanel.setVisibility(View.VISIBLE);
-            // Pasang kembali padding sesuai tinggi keyboard
             keyboardPanel.post(() -> {
                 int kbHeight = keyboardPanel.getHeight();
                 nestedScrollView.setPadding(
-                    nestedScrollView.getPaddingLeft(),
-                    nestedScrollView.getPaddingTop(),
-                    nestedScrollView.getPaddingRight(),
-                    kbHeight
+                        nestedScrollView.getPaddingLeft(),
+                        nestedScrollView.getPaddingTop(),
+                        nestedScrollView.getPaddingRight(),
+                        kbHeight
                 );
             });
         }
     }
 
     // =========================================================
-    // Hitung turunan — sama dengan kode lama kamu
-    // Perbedaan: updateSteps() sekarang pakai RecyclerView
+    // HITUNG TURUNAN — pakai DerivativeEngine
     // =========================================================
     private void setupButtons() {
         btnHitungBottom.setOnClickListener(v -> hitungTurunan());
     }
+
+    private String lastInput = "";
+    private DerivativeEngine.Node lastDerivativeNode = null;
 
     private void hitungTurunan() {
         String input = inputFunction.getText().toString().trim();
         if (input.isEmpty()) return;
 
         try {
-            String hasil = turunkanPolinomial(input);
+            DerivativeEngine.Result result = engine.differentiate(input);
+            String hasil = result.derivativeStr;
+
             txtHasil.setText("f'(x) = " + hasil);
 
-            // Update langkah via RecyclerView
-            updateSteps(input, hasil);
+            lastInput = input;
+            lastDerivativeNode = result.derivative;
 
-            // Grafik
-            plotGrafik(input, hasil);
+            updateSteps(result);
+            plotGrafik(input, result.derivative);
 
-            // Legend
             View v = getView();
             if (v != null) {
                 TextView lFx  = v.findViewById(R.id.legendFx);
@@ -284,60 +280,29 @@ public class TurunanFragment extends Fragment {
                 if (lDfx != null) lDfx.setText("f'(x) = " + hasil);
             }
 
-            // Scroll ke bagian langkah
             nestedScrollView.post(() ->
                     nestedScrollView.smoothScrollTo(0, rvSteps.getTop())
             );
 
         } catch (Exception e) {
-            txtHasil.setText("f'(x) = Error");
+            txtHasil.setText("f'(x) = Error: periksa penulisan fungsi");
         }
     }
 
     // =========================================================
-    // Update langkah — sekarang pakai StepAdapter
+    // UPDATE LANGKAH — tiap Step dari engine jadi satu Stepmodel
     // =========================================================
-    private void updateSteps(String input, String hasil) {
+    private void updateSteps(DerivativeEngine.Result result) {
         List<Stepmodel> steps = new ArrayList<>();
-        
-        // Step 1: Notasi Penulisan Turunan (Gambar 2)
-        steps.add(new Stepmodel(1,
-                "Notasi Penulisan Turunan",
-                "f'(x) atau dy/dx",
-                "Berdasarkan Gambar 2, sebuah fungsi yang sedang diturunkan dapat ditulis dalam Notasi Aksen f'(x), Notasi Leibniz dy/dx, atau Notasi Operator D."));
-
-        // Step 2: Identifikasi Aturan (Gambar 3/4)
-        String ruleName = "Theorem C: Power Rule";
-        String ruleFormula = "Dₓ(xⁿ) = nxⁿ⁻¹";
-        
-        if (!input.contains("x")) {
-            ruleName = "Theorem A: Constant Function Rule";
-            ruleFormula = "Dₓ(k) = 0";
-        } else if (input.trim().equals("x")) {
-            ruleName = "Theorem B: Identity Function Rule";
-            ruleFormula = "Dₓ(x) = 1";
-        } else if (input.contains("+") || input.contains("-")) {
-            ruleName = "Theorem E & F: Sum and Difference Rule";
-            ruleFormula = "Dₓ[f(x) ± g(x)] = f'(x) ± g'(x)";
+        int idx = 1;
+        for (DerivativeEngine.Step s : result.steps) {
+            steps.add(new Stepmodel(
+                    idx++,
+                    s.theorem,
+                    s.formulaRule,
+                    s.explanation + "\n" + s.expression
+            ));
         }
-        
-        steps.add(new Stepmodel(2,
-                ruleName,
-                ruleFormula,
-                "Langkah selanjutnya adalah menentukan aturan turunan aljabar yang sesuai berdasarkan Teorema Dasar pada Gambar 3 & 4."));
-
-        // Step 3: Proses Diferensiasi
-        steps.add(new Stepmodel(3,
-                "Proses Diferensiasi",
-                "d/dx (" + input + ")",
-                "Turunkan setiap suku dengan mengalikan koefisien dengan pangkat lama, lalu kurangi pangkat variabel x sebesar 1."));
-
-        // Step 4: Hasil Akhir
-        steps.add(new Stepmodel(4,
-                "Hasil Akhir",
-                "dy/dx = " + hasil,
-                "Proses perhitungan selesai. Sesuai notasi Leibniz, turunan dari f(x) adalah " + hasil));
-
         stepAdapter.submitList(steps);
     }
 
@@ -350,6 +315,8 @@ public class TurunanFragment extends Fragment {
         lineChart.clear();
         lineChart.invalidate();
         stepAdapter.submitList(new ArrayList<>());
+        lastInput = "";
+        lastDerivativeNode = null;
 
         View v = getView();
         if (v != null) {
@@ -359,275 +326,69 @@ public class TurunanFragment extends Fragment {
     }
 
     // =========================================================
-    // Evaluasi ekspresi numerik (tombol =)
-    // Sama persis dengan kode lama kamu
-    // =========================================================
-    private void evaluasiEkspresi() {
-        String raw = inputFunction.getText().toString().trim();
-        if (raw.isEmpty()) return;
-        try {
-            double hasil    = eval(normalizeExpr(raw));
-            String hasilStr = formatHasil(hasil);
-            txtHasil.setText("= " + hasilStr);
-
-            stepAdapter.submitList(new ArrayList<>());
-        } catch (Exception e) {
-            txtHasil.setText("Error");
-        }
-    }
-
-    // =========================================================
-    // TURUNAN POLINOMIAL — tidak diubah dari kode lama kamu
-    // =========================================================
-    private String turunkanPolinomial(String expr) {
-        String e = expr.replaceAll("\\s+", "")
-                .replace("×", "*")
-                .replace("÷", "/")
-                .replace("²", "^2")
-                .replace("π", String.valueOf(Math.PI));
-
-        if (!e.startsWith("-") && !e.startsWith("+")) e = "+" + e;
-
-        List<String> sukuList  = new ArrayList<>();
-        List<String> tandaList = new ArrayList<>();
-
-        int start = 0;
-        for (int i = 1; i < e.length(); i++) {
-            char c = e.charAt(i);
-            if ((c == '+' || c == '-') && e.charAt(i - 1) != '^') {
-                tandaList.add(String.valueOf(e.charAt(start)));
-                sukuList.add(e.substring(start + 1, i));
-                start = i;
-            }
-        }
-        tandaList.add(String.valueOf(e.charAt(start)));
-        sukuList.add(e.substring(start + 1));
-
-        StringBuilder hasil = new StringBuilder();
-        for (int i = 0; i < sukuList.size(); i++) {
-            String s   = sukuList.get(i);
-            String sgn = tandaList.get(i);
-            String d   = turunkanSuku(s, sgn);
-            if (d != null && !d.isEmpty() && !d.equals("0")) {
-                if (hasil.length() > 0 && !d.startsWith("-")) hasil.append("+");
-                hasil.append(d);
-            }
-        }
-        return hasil.length() == 0 ? "0" : hasil.toString();
-    }
-
-    private String turunkanSuku(String suku, String sgn) {
-        double sign = sgn.equals("-") ? -1 : 1;
-        suku = suku.trim();
-        if (suku.isEmpty()) return null;
-
-        if (suku.contains("x^")) {
-            String[] parts = suku.split("x\\^");
-            double koef    = parseKoef(parts[0]) * sign;
-            double exp     = Double.parseDouble(parts[1]);
-            return formatSuku(koef * exp, exp - 1);
-        }
-        if (suku.contains("x")) {
-            String kStr = suku.replace("x", "").replace("*", "");
-            return formatDouble(parseKoef(kStr) * sign);
-        }
-        return null; // konstanta → 0
-    }
-
-    private double parseKoef(String s) {
-        s = s.trim();
-        if (s.isEmpty() || s.equals("+")) return 1.0;
-        if (s.equals("-"))                return -1.0;
-        if (s.endsWith("*")) s = s.substring(0, s.length() - 1);
-        try { return Double.parseDouble(s); } catch (Exception e) { return 1.0; }
-    }
-
-    private String formatSuku(double koef, double exp) {
-        if (koef == 0) return null;
-        String koefStr = (koef == 1) ? "" : (koef == -1) ? "-" : formatDouble(koef);
-        if (exp == 0) return formatDouble(koef);
-        if (exp == 1) return koefStr + "x";
-        return koefStr + "x^" + formatDouble(exp);
-    }
-
-    private String formatDouble(double d) {
-        if (d == Math.floor(d) && !Double.isInfinite(d))
-            return String.valueOf((long) d);
-        return String.valueOf(d);
-    }
-
-    private String formatHasil(double d) {
-        if (Double.isNaN(d))      return "Tidak terdefinisi";
-        if (Double.isInfinite(d)) return d > 0 ? "∞" : "-∞";
-        if (d == Math.floor(d) && !Double.isInfinite(d))
-            return String.valueOf((long) d);
-        return String.format("%.10f", d).replaceAll("0+$", "").replaceAll("\\.$", "");
-    }
-
-    // =========================================================
-    // EVAL NUMERIK — tidak diubah dari kode lama kamu
-    // =========================================================
-    private String normalizeExpr(String e) {
-        return e.replace("×", "*")
-                .replace("÷", "/")
-                .replace("²", "^2")
-                .replace("√", "sqrt")
-                .replace("π", String.valueOf(Math.PI))
-                .replace("e", String.valueOf(Math.E))
-                .replaceAll("(\\d)(x)", "$1*$2")
-                .replaceAll("(x)(\\d)", "$1*$2");
-    }
-
-    private double eval(String expr) {
-        return new Object() {
-            int pos = -1, ch;
-
-            void nextChar() { ch = (++pos < expr.length()) ? expr.charAt(pos) : -1; }
-
-            boolean eat(int c) {
-                while (ch == ' ') nextChar();
-                if (ch == c) { nextChar(); return true; }
-                return false;
-            }
-
-            double parse() {
-                nextChar();
-                double v = parseExpr();
-                if (pos < expr.length()) throw new RuntimeException("Unexpected: " + (char) ch);
-                return v;
-            }
-
-            double parseExpr() {
-                double v = parseTerm();
-                for (;;) {
-                    if      (eat('+')) v += parseTerm();
-                    else if (eat('-')) v -= parseTerm();
-                    else return v;
-                }
-            }
-
-            double parseTerm() {
-                double v = parseFactor();
-                for (;;) {
-                    if      (eat('*')) v *= parseFactor();
-                    else if (eat('/')) v /= parseFactor();
-                    else return v;
-                }
-            }
-
-            double parseFactor() {
-                if (eat('+')) return +parseFactor();
-                if (eat('-')) return -parseFactor();
-                double v;
-                int startPos = this.pos;
-                if (eat('(')) { v = parseExpr(); eat(')'); }
-                else if ((ch >= '0' && ch <= '9') || ch == '.') {
-                    while ((ch >= '0' && ch <= '9') || ch == '.') nextChar();
-                    v = Double.parseDouble(expr.substring(startPos, this.pos));
-                } else if (ch >= 'a' && ch <= 'z') {
-                    while (ch >= 'a' && ch <= 'z') nextChar();
-                    String fn = expr.substring(startPos, this.pos);
-                    if (eat('(')) { v = parseExpr(); eat(')'); } else { v = parseFactor(); }
-                    switch (fn) {
-                        case "sqrt": v = Math.sqrt(v); break;
-                        case "sin":  v = Math.sin(Math.toRadians(v)); break;
-                        case "cos":  v = Math.cos(Math.toRadians(v)); break;
-                        case "tan":  v = Math.tan(Math.toRadians(v)); break;
-                        case "ln":   v = Math.log(v); break;
-                        case "log":  v = Math.log10(v); break;
-                        case "abs":  v = Math.abs(v); break;
-                        default: throw new RuntimeException("Unknown fn: " + fn);
-                    }
-                } else throw new RuntimeException("Unexpected: " + (char) ch);
-                if (eat('^')) v = Math.pow(v, parseFactor());
-                return v;
-            }
-        }.parse();
-    }
-
-    // =========================================================
-    // GRAFIK — tidak diubah dari kode lama kamu
+    // GRAFIK — pakai DerivativeEngine.evaluate untuk f(x) & f'(x)
     // =========================================================
     private void setupChart(View view) {
-
         lineChart.getDescription().setEnabled(false);
-
-        // TAMBAHAN
         lineChart.setDrawGridBackground(false);
         lineChart.setBackgroundColor(Color.WHITE);
-
         lineChart.setTouchEnabled(true);
         lineChart.setDragEnabled(true);
         lineChart.setScaleEnabled(true);
         lineChart.setPinchZoom(true);
-
         lineChart.getLegend().setEnabled(false);
-
         lineChart.setNoDataText("Masukkan fungsi lalu tekan Hitung Turunan");
 
-        // X Axis
         XAxis xAxis = lineChart.getXAxis();
         xAxis.setPosition(XAxis.XAxisPosition.BOTTOM);
-
         xAxis.setDrawGridLines(true);
         xAxis.setGridColor(Color.parseColor("#EEEEEE"));
-
         xAxis.setAxisLineColor(Color.parseColor("#9CA3AF"));
         xAxis.setTextColor(Color.GRAY);
-
-        // TAMBAHAN
         xAxis.setTextSize(11f);
 
-        // Y Axis kiri
         YAxis leftAxis = lineChart.getAxisLeft();
-
         leftAxis.setDrawGridLines(true);
         leftAxis.setGridColor(Color.parseColor("#EEEEEE"));
-
         leftAxis.setAxisLineColor(Color.parseColor("#9CA3AF"));
         leftAxis.setTextColor(Color.GRAY);
-
-        // TAMBAHAN
         leftAxis.setTextSize(11f);
-
-        // RANGE BIAR GRAFIK ENAK
         leftAxis.setAxisMinimum(-20f);
         leftAxis.setAxisMaximum(40f);
 
         lineChart.getAxisRight().setEnabled(false);
-
-        // TAMBAHAN
         lineChart.setExtraOffsets(8f, 8f, 8f, 16f);
 
         Button btnZoomIn  = view.findViewById(R.id.btnZoomIn);
         Button btnZoomOut = view.findViewById(R.id.btnZoomOut);
-
-        if (btnZoomIn != null)
-            btnZoomIn.setOnClickListener(v -> lineChart.zoomIn());
-
-        if (btnZoomOut != null)
-            btnZoomOut.setOnClickListener(v -> lineChart.zoomOut());
+        if (btnZoomIn  != null) btnZoomIn.setOnClickListener(v -> lineChart.zoomIn());
+        if (btnZoomOut != null) btnZoomOut.setOnClickListener(v -> lineChart.zoomOut());
     }
 
-    private void plotGrafik(String fxExpr, String dfxExpr) {
+    private void plotGrafik(String fxExpr, DerivativeEngine.Node dfxNode) {
         ArrayList<Entry> fxPts  = new ArrayList<>();
         ArrayList<Entry> dfxPts = new ArrayList<>();
 
-        String fBase  = normalizeExpr(fxExpr);
-        String dfBase = normalizeExpr(dfxExpr);
+        DerivativeEngine.Node fxNode;
+        try {
+            fxNode = new DerivativeEngine().parse(fxExpr);
+        } catch (Exception e) {
+            lineChart.clear();
+            lineChart.setNoDataText("Grafik tidak dapat ditampilkan untuk fungsi ini");
+            lineChart.invalidate();
+            return;
+        }
 
         for (int xi = -60; xi <= 60; xi++) {
-            double x    = xi / 10.0;
-            String xStr = (x < 0) ? "(" + x + ")" : String.valueOf(x);
-
+            double x = xi / 10.0;
             try {
-                double fy = eval(fBase.replace("x", xStr));
+                double fy = engine.evaluate(fxNode, x);
                 if (!Double.isNaN(fy) && !Double.isInfinite(fy) && Math.abs(fy) < 1000)
                     fxPts.add(new Entry((float) x, (float) fy));
             } catch (Exception ignored) {}
 
             try {
-                double dfy = eval(dfBase.replace("x", xStr));
+                double dfy = engine.evaluate(dfxNode, x);
                 if (!Double.isNaN(dfy) && !Double.isInfinite(dfy) && Math.abs(dfy) < 1000)
                     dfxPts.add(new Entry((float) x, (float) dfy));
             } catch (Exception ignored) {}

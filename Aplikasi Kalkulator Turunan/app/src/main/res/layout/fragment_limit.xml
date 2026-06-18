@@ -800,13 +800,13 @@
             <Button android:id="@+id/btnBackspace" style="@style/KeyboardButtonStyle" android:text="⌫"/>
         </LinearLayout>
 
-        <!-- Row 4: 4 5 6 * ^ -->
+        <!-- Row 4: 4 5 6 * / -->
         <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:layout_marginTop="5dp">
             <Button android:id="@+id/btn4"        style="@style/KeyboardButtonStyle" android:text="4"/>
             <Button android:id="@+id/btn5"        style="@style/KeyboardButtonStyle" android:text="5"/>
             <Button android:id="@+id/btn6"        style="@style/KeyboardButtonStyle" android:text="6"/>
             <Button android:id="@+id/btnMultiply" style="@style/KeyboardButtonStyle" android:text="*"/>
-            <Button android:id="@+id/btnCaret"    style="@style/KeyboardButtonStyle" android:text="^"/>
+            <Button android:id="@+id/btnCaret"    style="@style/KeyboardButtonStyle" android:text="/"/>
         </LinearLayout>
 
         <!-- Row 5: 1 2 3 − ( -->
