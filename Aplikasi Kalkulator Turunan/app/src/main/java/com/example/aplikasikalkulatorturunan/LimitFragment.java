@@ -107,13 +107,14 @@ public class LimitFragment extends Fragment {
             txtLimitLabel.setText("h→0");
 
             String fx_h = fx.replace("x", "(x+h)");
-            List<Stepmodel> steps = new ArrayList<>();
-            steps.add(new Stepmodel(1, "Definisi Turunan",       "f'(x) = lim[h→0] [f(x+h)-f(x)]/h", "Langkah awal menggunakan rumus turunan melalui limit sesuai definisi turunan."));
-            steps.add(new Stepmodel(2, "Substitusi (x+h)",       "lim [ "+fx_h+" - f(x) ] / h",       "Ganti x dengan (x+h), jabarkan perkalian, kemudian kurangi dengan f(x)."));
-            steps.add(new Stepmodel(3, "Hasil Akhir (h→0)",      "f'(x) = " + dfx,                    "Suku f(x) habis. Bagi sisa pembilang dengan h, lalu masukkan h = 0."));
-            stepAdapter.submitList(steps);
-
-            plotGrafik(normalizeExpr(fx), 0, dfx, false, false);
+            String[] t = {"Definisi Turunan", "Substitusi (x+h)", "Hasil Akhir (h→0)"};
+            String[] s = {"Gambar 1", "f(x+h) - f(x)", "Diferensial Aljabar"};
+            String[] f = {"Rumus Gambar 10", "lim [ "+fx_h+" - f(x) ] / h", "= " + dfx};
+            String[] d = {"Langkah awal menggunakan rumus turunan melalui limit sesuai Gambar 10.",
+                          "Ganti x dengan (x+h), jabarkan perkalian, kemudian kurangi dengan f(x).",
+                          "Suku f(x) habis. Bagi sisa pembilang dengan h, lalu masukkan h = 0."};
+            setStepData(t, s, f, d);
+            plotGrafik(normalizeExpr(fx), 0, dfx);
         } catch (Exception e) { txtHasil.setText("Error"); }
     }
 
@@ -237,32 +238,13 @@ public class LimitFragment extends Fragment {
         ds.setMode(LineDataSet.Mode.CUBIC_BEZIER);
 
         LineData data = new LineData(ds);
-
-        if (showDot) {
-            try {
-                float resY = Float.parseFloat(resStr.replace(",", "."));
-                ArrayList<Entry> dot = new ArrayList<>();
-                dot.add(new Entry((float) a, resY));
-                LineDataSet dsDot = new LineDataSet(dot, "P");
-
-                if (hollowDot) {
-                    // === FIX 2: titik BERLUBANG untuk kasus 0/0 ===
-                    dsDot.setCircleColor(Color.RED);
-                    dsDot.setCircleRadius(7f);
-                    dsDot.setDrawCircleHole(true);          // lubang di tengah
-                    dsDot.setCircleHoleColor(Color.WHITE);  // warna lubang = putih
-                    dsDot.setCircleHoleRadius(4f);
-                } else {
-                    // titik SOLID untuk fungsi kontinu
-                    dsDot.setCircleColor(Color.RED);
-                    dsDot.setCircleRadius(6f);
-                    dsDot.setDrawCircleHole(false);
-                }
-                dsDot.setDrawValues(false);
-                dsDot.setLineWidth(0f);
-                data.addDataSet(dsDot);
-            } catch (Exception ignored) {}
-        }
+        try {
+            float resY = Float.parseFloat(resStr.replace(",", "."));
+            ArrayList<Entry> dot = new ArrayList<>(); dot.add(new Entry((float)a, resY));
+            LineDataSet dsDot = new LineDataSet(dot, "P");
+            dsDot.setCircleColor(Color.RED); dsDot.setCircleRadius(6f); dsDot.setDrawValues(false);
+            data.addDataSet(dsDot);
+        } catch (Exception ignored) {}
 
         lineChart.setData(data);
         lineChart.animateX(600);
@@ -297,7 +279,7 @@ public class LimitFragment extends Fragment {
         int[] ids = {R.id.btnSin, R.id.btnCos, R.id.btnTan, R.id.btnLn, R.id.btnLog, R.id.btnSqrt, R.id.btnSquare, R.id.btnPow, R.id.btnPi, R.id.btnE,
                 R.id.btn7, R.id.btn8, R.id.btn9, R.id.btnDivide, R.id.btn4, R.id.btn5, R.id.btn6, R.id.btnMultiply, R.id.btnCaret, R.id.btn1, R.id.btn2, R.id.btn3, R.id.btnMinus, R.id.btnOpenParen,
                 R.id.btn0, R.id.btnDot, R.id.btnCloseParen, R.id.btnPlus, R.id.btnX};
-        String[] vals = {"sin(", "cos(", "tan(", "ln(", "log(", "√(", "²", "^", "π", "e", "7", "8", "9", "/", "4", "5", "6", "*", "^", "1", "2", "3", "-", "(", "0", ".", ")", "+", "x"};
+        String[] vals = {"sin(", "cos(", "tan(", "ln(", "log(", "√(", "²", "^", "π", "e", "7", "8", "9", "/", "4", "5", "6", "*", "/", "1", "2", "3", "-", "(", "0", ".", ")", "+", "x"};
         for (int i = 0; i < ids.length; i++) {
             final String val = vals[i];
             v.findViewById(ids[i]).setOnClickListener(v1 -> { activeInput.getText().insert(activeInput.getSelectionStart(), val); });

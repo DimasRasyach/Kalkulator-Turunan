@@ -1,9 +1,15 @@
 package com.example.aplikasikalkulatorturunan;
 
+// StepAdapter.java
+// RecyclerView.Adapter untuk menampilkan daftar Stepmodel.
+// Disesuaikan dengan item_step.xml versi project kamu:
+//   tvStepNumber, tvStepTitle, tvStepBadge, tvStepDetail, ivArrow, stepHeader
+
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -12,85 +18,49 @@ import androidx.recyclerview.widget.RecyclerView;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Adapter untuk RecyclerView langkah penyelesaian turunan.
- *
- * Fitur:
- * - Accordion: hanya satu langkah terbuka sekaligus
- * - Chevron berputar saat expand/collapse
- * - submitList() untuk update data + notifyDataSetChanged
- */
 public class StepAdapter extends RecyclerView.Adapter<StepAdapter.StepViewHolder> {
 
-    private List<Stepmodel> items          = new ArrayList<>();
-    private int             expandedIndex  = -1; // -1 = semua collapsed
+    private List<Stepmodel> items = new ArrayList<>();
+    private final List<Boolean> expanded = new ArrayList<>();
 
-    // ------------------------------------------------------------------
-    // ViewHolder
-    // ------------------------------------------------------------------
-    static class StepViewHolder extends RecyclerView.ViewHolder {
-        final View     stepHeader;
-        final TextView tvNumber;
-        final TextView tvTitle;
-        final TextView tvBadge;
-        final TextView tvDetail;
-        final ImageView ivArrow;
-
-        StepViewHolder(@NonNull View itemView) {
-            super(itemView);
-            stepHeader = itemView.findViewById(R.id.stepHeader);
-            tvNumber   = itemView.findViewById(R.id.tvStepNumber);
-            tvTitle    = itemView.findViewById(R.id.tvStepTitle);
-            tvBadge    = itemView.findViewById(R.id.tvStepBadge);
-            tvDetail   = itemView.findViewById(R.id.tvStepDetail);
-            ivArrow    = itemView.findViewById(R.id.ivArrow);
-        }
+    public void submitList(List<Stepmodel> newItems) {
+        items = newItems != null ? newItems : new ArrayList<>();
+        expanded.clear();
+        for (int i = 0; i < items.size(); i++) expanded.add(false);
+        notifyDataSetChanged();
     }
 
-    // ------------------------------------------------------------------
-    // Adapter overrides
-    // ------------------------------------------------------------------
     @NonNull
     @Override
     public StepViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        View v = LayoutInflater.from(parent.getContext())
+        View view = LayoutInflater.from(parent.getContext())
                 .inflate(R.layout.item_step, parent, false);
-        return new StepViewHolder(v);
+        return new StepViewHolder(view);
     }
 
     @Override
     public void onBindViewHolder(@NonNull StepViewHolder holder, int position) {
-        Stepmodel step       = items.get(position);
-        boolean   isExpanded = (position == expandedIndex);
+        Stepmodel step = items.get(position);
+        boolean isExpanded = expanded.get(position);
 
-        holder.tvNumber.setText(String.valueOf(step.number));
-        holder.tvTitle.setText(step.title);
-        holder.tvBadge.setText(step.badge);
-        holder.tvDetail.setText(step.detail);
+        holder.tvStepNumber.setText(String.valueOf(step.number));
+        holder.tvStepTitle.setText(step.title);
 
-        // Tampilkan / sembunyikan detail
-        holder.tvDetail.setVisibility(isExpanded ? View.VISIBLE : View.GONE);
+        // Badge: tampilkan formula umum secara singkat (potong jika terlalu panjang)
+        String badge = step.formula;
+        if (badge != null && badge.length() > 22) {
+            badge = badge.substring(0, 20) + "..";
+        }
+        holder.tvStepBadge.setText(badge);
 
-        // Putar chevron
+        holder.tvStepDetail.setText(step.detail);
+        holder.tvStepDetail.setVisibility(isExpanded ? View.VISIBLE : View.GONE);
         holder.ivArrow.setRotation(isExpanded ? 180f : 0f);
 
-        // Klik header → toggle accordion
         holder.stepHeader.setOnClickListener(v -> {
-            int pos = holder.getAdapterPosition();
-            if (pos == RecyclerView.NO_ID) return;
-
-            int previous = expandedIndex;
-
-            if (expandedIndex == pos) {
-                // Tutup yang sudah terbuka
-                expandedIndex = -1;
-                notifyItemChanged(pos);
-            } else {
-                // Tutup item lama, buka item baru
-                expandedIndex = pos;
-                if (previous != -1) notifyItemChanged(previous);
-                notifyItemChanged(pos);
-            }
+            boolean newState = !expanded.get(position);
+            expanded.set(position, newState);
+            notifyItemChanged(position);
         });
     }
 
@@ -99,21 +69,19 @@ public class StepAdapter extends RecyclerView.Adapter<StepAdapter.StepViewHolder
         return items.size();
     }
 
-    // ------------------------------------------------------------------
-    // Public API
-    // ------------------------------------------------------------------
+    static class StepViewHolder extends RecyclerView.ViewHolder {
+        LinearLayout stepHeader;
+        TextView tvStepNumber, tvStepTitle, tvStepBadge, tvStepDetail;
+        ImageView ivArrow;
 
-    /** Ganti data dan reset expanded state */
-    public void submitList(List<Stepmodel> newItems) {
-        expandedIndex = -1;
-        items = new ArrayList<>(newItems);
-        notifyDataSetChanged();
-    }
-
-    /** Collapse semua item tanpa ganti data */
-    public void collapseAll() {
-        int previous = expandedIndex;
-        expandedIndex = -1;
-        if (previous != -1) notifyItemChanged(previous);
+        StepViewHolder(@NonNull View itemView) {
+            super(itemView);
+            stepHeader   = itemView.findViewById(R.id.stepHeader);
+            tvStepNumber = itemView.findViewById(R.id.tvStepNumber);
+            tvStepTitle  = itemView.findViewById(R.id.tvStepTitle);
+            tvStepBadge  = itemView.findViewById(R.id.tvStepBadge);
+            tvStepDetail = itemView.findViewById(R.id.tvStepDetail);
+            ivArrow      = itemView.findViewById(R.id.ivArrow);
+        }
     }
 }
