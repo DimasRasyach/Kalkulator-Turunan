@@ -107,13 +107,16 @@ public class LimitFragment extends Fragment {
             txtLimitLabel.setText("h→0");
 
             String fx_h = fx.replace("x", "(x+h)");
-            String[] t = {"Definisi Turunan", "Substitusi (x+h)", "Hasil Akhir (h→0)"};
-            String[] s = {"Gambar 1", "f(x+h) - f(x)", "Diferensial Aljabar"};
-            String[] f = {"Rumus Gambar 10", "lim [ "+fx_h+" - f(x) ] / h", "= " + dfx};
-            String[] d = {"Langkah awal menggunakan rumus turunan melalui limit sesuai Gambar 10.",
-                          "Ganti x dengan (x+h), jabarkan perkalian, kemudian kurangi dengan f(x).",
-                          "Suku f(x) habis. Bagi sisa pembilang dengan h, lalu masukkan h = 0."};
-            setStepData(t, s, f, d);
+
+            List<Stepmodel> steps = new ArrayList<>();
+            steps.add(new Stepmodel(1, "Definisi Turunan",   "Rumus Gambar 10",
+                    "Langkah awal menggunakan rumus turunan melalui limit sesuai Gambar 10."));
+            steps.add(new Stepmodel(2, "Substitusi (x+h)",   "lim [ " + fx_h + " - f(x) ] / h",
+                    "Ganti x dengan (x+h), jabarkan perkalian, kemudian kurangi dengan f(x)."));
+            steps.add(new Stepmodel(3, "Hasil Akhir (h→0)",  "= " + dfx,
+                    "Suku f(x) habis. Bagi sisa pembilang dengan h, lalu masukkan h = 0."));
+            stepAdapter.submitList(steps);
+
             plotGrafik(normalizeExpr(fx), 0, dfx);
         } catch (Exception e) { txtHasil.setText("Error"); }
     }
