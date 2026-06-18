@@ -27,7 +27,7 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Masukkan limit fungsi"
+                android:text="Masukkan Limit Fungsi"
                 android:textStyle="bold"
                 android:textSize="15sp"
                 android:textColor="#111827"/>
@@ -74,9 +74,9 @@
                                 android:text="lim"
                                 android:textSize="18sp"
                                 android:textStyle="italic|bold"
-                                android:textColor="#1D4FFF"/>
+                                android:textColor="#1D4FFF"
+                                android:layout_gravity="start"/>
 
-                            <!-- x → a (input nilai batas) -->
                             <LinearLayout
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
@@ -92,7 +92,7 @@
 
                                 <EditText
                                     android:id="@+id/inputLimitValue"
-                                    android:layout_width="40dp"
+                                    android:layout_width="25dp"
                                     android:layout_height="wrap_content"
                                     android:background="@android:color/transparent"
                                     android:textSize="14sp"
@@ -146,7 +146,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="16dp"
-                android:text="Hasil Limit"
+                android:text="Hasil Limit Turunan"
                 android:textStyle="bold"
                 android:textSize="15sp"
                 android:textColor="#111827"/>
@@ -208,7 +208,7 @@
                             android:id="@+id/txtHasil"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:hint="f(x) = ..."
+                            android:hint="f'(x) Tampil Di Sini"
                             android:textColorHint="#93A3BF"
                             android:textColor="#1D4FFF"
                             android:textStyle="bold"
@@ -218,21 +218,6 @@
 
                 </com.google.android.material.card.MaterialCardView>
 
-                <!-- Hitung Limit button -->
-                <Button
-                    android:id="@+id/btnHitung"
-                    android:layout_width="wrap_content"
-                    android:layout_height="match_parent"
-                    android:layout_marginStart="12dp"
-                    android:backgroundTint="#1D4FFF"
-                    android:paddingStart="18dp"
-                    android:paddingEnd="18dp"
-                    android:text="Hitung Limit"
-                    android:textAllCaps="false"
-                    android:textSize="14sp"
-                    android:textColor="#FFFFFF"
-                    app:cornerRadius="14dp"/>
-
             </LinearLayout>
 
             <!-- Label grafik -->
@@ -240,12 +225,12 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="20dp"
-                android:text="Grafik Fungsi"
+                android:text="Grafik"
                 android:textStyle="bold"
                 android:textSize="15sp"
                 android:textColor="#111827"/>
 
-            <!-- GRAFIK CARD -->
+            <!-- GRAFIK CARD — disamakan dengan fragment_turunan -->
             <com.google.android.material.card.MaterialCardView
                 android:layout_width="match_parent"
                 android:layout_height="300dp"
@@ -267,107 +252,7 @@
                         android:layout_height="match_parent"
                         android:layout_marginBottom="10dp"/>
 
-                    <!-- Label f(x) di pojok kiri atas -->
-                    <TextView
-                        android:id="@+id/txtChartFx"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_alignParentStart="true"
-                        android:layout_alignParentTop="true"
-                        android:layout_margin="8dp"
-                        android:textSize="12sp"
-                        android:textColor="#374151"
-                        android:textStyle="italic"
-                        android:visibility="gone"/>
-
-                    <!-- Tooltip nilai limit -->
-                    <com.google.android.material.card.MaterialCardView
-                        android:id="@+id/tooltipCard"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_alignParentEnd="true"
-                        android:layout_alignParentTop="true"
-                        android:layout_margin="8dp"
-                        app:cardCornerRadius="10dp"
-                        app:cardBackgroundColor="#EEF2FF"
-                        app:strokeColor="#C7D7FF"
-                        app:strokeWidth="1dp"
-                        app:cardElevation="2dp"
-                        android:visibility="gone">
-
-                        <LinearLayout
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:orientation="vertical"
-                            android:padding="8dp">
-
-                            <TextView
-                                android:id="@+id/txtTooltipTitle"
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:textSize="11sp"
-                                android:textColor="#1D4FFF"
-                                android:textStyle="bold"/>
-
-                            <!-- Keterangan titik -->
-                            <LinearLayout
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:orientation="horizontal"
-                                android:gravity="center_vertical"
-                                android:layout_marginTop="4dp">
-
-                                <View
-                                    android:layout_width="10dp"
-                                    android:layout_height="10dp"
-                                    android:background="@drawable/bg_step_number"/>
-
-                                <TextView
-                                    android:layout_width="wrap_content"
-                                    android:layout_height="wrap_content"
-                                    android:layout_marginStart="4dp"
-                                    android:text="Titik tidak terdefinisi"
-                                    android:textSize="10sp"
-                                    android:textColor="#6B7280"/>
-
-                            </LinearLayout>
-
-                            <LinearLayout
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:orientation="horizontal"
-                                android:gravity="center_vertical"
-                                android:layout_marginTop="2dp">
-
-                                <View
-                                    android:layout_width="10dp"
-                                    android:layout_height="10dp"
-                                    android:background="#1D4FFF"/>
-
-                                <TextView
-                                    android:layout_width="wrap_content"
-                                    android:layout_height="wrap_content"
-                                    android:layout_marginStart="4dp"
-                                    android:text="Nilai limit (pendekatan)"
-                                    android:textSize="10sp"
-                                    android:textColor="#6B7280"/>
-
-                            </LinearLayout>
-
-                            <TextView
-                                android:id="@+id/txtTooltipEq"
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:layout_marginTop="4dp"
-                                android:textSize="11sp"
-                                android:textColor="#374151"
-                                android:textStyle="italic"/>
-
-                        </LinearLayout>
-
-                    </com.google.android.material.card.MaterialCardView>
-
-                    <!-- Zoom buttons -->
+                    <!-- Zoom buttons — disamakan dengan fragment_turunan -->
                     <LinearLayout
                         android:layout_width="40dp"
                         android:layout_height="wrap_content"
@@ -422,313 +307,14 @@
                 android:textSize="16sp"
                 android:textColor="#111827"/>
 
-            <!-- STEP 1 -->
-            <com.google.android.material.card.MaterialCardView
+            <!-- RECYCLERVIEW langkah penyelesaian -->
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/rvSteps"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="10dp"
-                app:cardCornerRadius="16dp"
-                app:cardElevation="0dp"
-                app:cardBackgroundColor="#FFFFFF"
-                app:strokeColor="#E5E7EB"
-                app:strokeWidth="1dp">
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="vertical">
-
-                    <LinearLayout
-                        android:id="@+id/step1Header"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:gravity="center_vertical"
-                        android:orientation="horizontal"
-                        android:padding="14dp">
-
-                        <TextView
-                            android:layout_width="36dp"
-                            android:layout_height="36dp"
-                            android:background="@drawable/bg_step_number"
-                            android:gravity="center"
-                            android:text="1"
-                            android:textColor="#1D4FFF"
-                            android:textStyle="bold"
-                            android:textSize="14sp"/>
-
-                        <LinearLayout
-                            android:layout_width="0dp"
-                            android:layout_height="wrap_content"
-                            android:layout_weight="1"
-                            android:layout_marginStart="12dp"
-                            android:orientation="vertical">
-
-                            <TextView
-                                android:id="@+id/step1Title"
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:textStyle="bold"
-                                android:textSize="14sp"
-                                android:textColor="#111827"/>
-
-                            <TextView
-                                android:id="@+id/step1Subtitle"
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:layout_marginTop="2dp"
-                                android:textSize="12sp"
-                                android:textColor="#6B7280"/>
-
-                        </LinearLayout>
-
-                        <TextView
-                            android:id="@+id/step1Formula"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_marginEnd="4dp"
-                            android:textSize="13sp"
-                            android:textColor="#6B7280"/>
-
-                        <ImageView
-                            android:id="@+id/step1Arrow"
-                            android:layout_width="20dp"
-                            android:layout_height="20dp"
-                            android:src="@drawable/ic_chevron_down"
-                            app:tint="#9CA3AF"/>
-
-                    </LinearLayout>
-
-                    <TextView
-                        android:id="@+id/step1Detail"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:paddingStart="62dp"
-                        android:paddingEnd="14dp"
-                        android:paddingBottom="12dp"
-                        android:textSize="13sp"
-                        android:textColor="#6B7280"
-                        android:visibility="gone"/>
-
-                </LinearLayout>
-            </com.google.android.material.card.MaterialCardView>
-
-            <!-- STEP 2 -->
-            <com.google.android.material.card.MaterialCardView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
-                app:cardCornerRadius="16dp"
-                app:cardElevation="0dp"
-                app:cardBackgroundColor="#FFFFFF"
-                app:strokeColor="#E5E7EB"
-                app:strokeWidth="1dp">
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="vertical">
-
-                    <LinearLayout
-                        android:id="@+id/step2Header"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:gravity="center_vertical"
-                        android:orientation="horizontal"
-                        android:padding="14dp">
-
-                        <TextView
-                            android:layout_width="36dp"
-                            android:layout_height="36dp"
-                            android:background="@drawable/bg_step_number"
-                            android:gravity="center"
-                            android:text="2"
-                            android:textColor="#1D4FFF"
-                            android:textStyle="bold"
-                            android:textSize="14sp"/>
-
-                        <LinearLayout
-                            android:layout_width="0dp"
-                            android:layout_height="wrap_content"
-                            android:layout_weight="1"
-                            android:layout_marginStart="12dp"
-                            android:orientation="vertical">
-
-                            <TextView
-                                android:id="@+id/step2Title"
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:textStyle="bold"
-                                android:textSize="14sp"
-                                android:textColor="#111827"/>
-
-                            <TextView
-                                android:id="@+id/step2Subtitle"
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:layout_marginTop="2dp"
-                                android:textSize="12sp"
-                                android:textColor="#6B7280"/>
-
-                        </LinearLayout>
-
-                        <TextView
-                            android:id="@+id/step2Formula"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_marginEnd="4dp"
-                            android:textSize="13sp"
-                            android:textColor="#6B7280"/>
-
-                        <ImageView
-                            android:id="@+id/step2Arrow"
-                            android:layout_width="20dp"
-                            android:layout_height="20dp"
-                            android:src="@drawable/ic_chevron_down"
-                            app:tint="#9CA3AF"/>
-
-                    </LinearLayout>
-
-                    <TextView
-                        android:id="@+id/step2Detail"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:paddingStart="62dp"
-                        android:paddingEnd="14dp"
-                        android:paddingBottom="12dp"
-                        android:textSize="13sp"
-                        android:textColor="#6B7280"
-                        android:visibility="gone"/>
-
-                </LinearLayout>
-            </com.google.android.material.card.MaterialCardView>
-
-            <!-- STEP 3 -->
-            <com.google.android.material.card.MaterialCardView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
-                app:cardCornerRadius="16dp"
-                app:cardElevation="0dp"
-                app:cardBackgroundColor="#FFFFFF"
-                app:strokeColor="#E5E7EB"
-                app:strokeWidth="1dp">
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="vertical">
-
-                    <LinearLayout
-                        android:id="@+id/step3Header"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:gravity="center_vertical"
-                        android:orientation="horizontal"
-                        android:padding="14dp">
-
-                        <TextView
-                            android:layout_width="36dp"
-                            android:layout_height="36dp"
-                            android:background="@drawable/bg_step_number"
-                            android:gravity="center"
-                            android:text="3"
-                            android:textColor="#1D4FFF"
-                            android:textStyle="bold"
-                            android:textSize="14sp"/>
-
-                        <LinearLayout
-                            android:layout_width="0dp"
-                            android:layout_height="wrap_content"
-                            android:layout_weight="1"
-                            android:layout_marginStart="12dp"
-                            android:orientation="vertical">
-
-                            <TextView
-                                android:id="@+id/step3Title"
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:textStyle="bold"
-                                android:textSize="14sp"
-                                android:textColor="#111827"/>
-
-                            <TextView
-                                android:id="@+id/step3Subtitle"
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:layout_marginTop="2dp"
-                                android:textSize="12sp"
-                                android:textColor="#6B7280"/>
-
-                        </LinearLayout>
-
-                        <TextView
-                            android:id="@+id/step3Formula"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_marginEnd="4dp"
-                            android:textSize="13sp"
-                            android:textColor="#6B7280"/>
-
-                        <ImageView
-                            android:id="@+id/step3Arrow"
-                            android:layout_width="20dp"
-                            android:layout_height="20dp"
-                            android:src="@drawable/ic_chevron_down"
-                            app:tint="#9CA3AF"/>
-
-                    </LinearLayout>
-
-                    <TextView
-                        android:id="@+id/step3Detail"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:paddingStart="62dp"
-                        android:paddingEnd="14dp"
-                        android:paddingBottom="12dp"
-                        android:textSize="13sp"
-                        android:textColor="#6B7280"
-                        android:visibility="gone"/>
-
-                </LinearLayout>
-            </com.google.android.material.card.MaterialCardView>
-
-            <!-- HASIL AKHIR CARD -->
-            <com.google.android.material.card.MaterialCardView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="12dp"
-                app:cardCornerRadius="16dp"
-                app:cardElevation="0dp"
-                app:cardBackgroundColor="#F0F4FF"
-                app:strokeColor="#C7D7FF"
-                app:strokeWidth="1dp">
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="horizontal"
-                    android:gravity="center_vertical"
-                    android:padding="14dp">
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Hasil Akhir"
-                        android:textColor="#1D4FFF"
-                        android:textStyle="bold"
-                        android:textSize="15sp"/>
-
-                    <TextView
-                        android:id="@+id/txtHasilAkhir"
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:gravity="end"
-                        android:textColor="#1D4FFF"
-                        android:textStyle="bold"
-                        android:textSize="22sp"/>
-                </LinearLayout>
-            </com.google.android.material.card.MaterialCardView>
+                android:nestedScrollingEnabled="false"
+                android:clipToPadding="false"/>
 
             <View
                 android:layout_width="match_parent"
@@ -791,12 +377,12 @@
             <Button android:id="@+id/btnE"      style="@style/KeyboardButtonStyle" android:text="e"/>
         </LinearLayout>
 
-        <!-- Row 3: 7 8 9 / ⌫ -->
+        <!-- Row 3: 7 8 9 ÷ ⌫ -->
         <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:layout_marginTop="5dp">
             <Button android:id="@+id/btn7"         style="@style/KeyboardButtonStyle" android:text="7"/>
             <Button android:id="@+id/btn8"         style="@style/KeyboardButtonStyle" android:text="8"/>
             <Button android:id="@+id/btn9"         style="@style/KeyboardButtonStyle" android:text="9"/>
-            <Button android:id="@+id/btnDivide"    style="@style/KeyboardButtonStyle" android:text="/"/>
+            <Button android:id="@+id/btnDivide"    style="@style/KeyboardButtonStyle" android:text="÷"/>
             <Button android:id="@+id/btnBackspace" style="@style/KeyboardButtonStyle" android:text="⌫"/>
         </LinearLayout>
 
@@ -829,6 +415,7 @@
                 android:layout_width="0dp"
                 android:layout_height="46dp"
                 android:layout_weight="1"
+                android:paddingTop="2dp"
                 android:layout_marginStart="6dp"
                 android:backgroundTint="#1D4FFF"
                 android:text="="
@@ -839,7 +426,7 @@
                 app:cornerRadius="12dp"/>
         </LinearLayout>
 
-        <!-- Row 7: x  AC  Hitung Limit (SATU TOMBOL SAJA) -->
+        <!-- Row 7: x  AC  Hitung Limit — disamakan dengan TurunanFragment -->
         <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:layout_marginTop="7dp">
 
             <Button
@@ -878,7 +465,7 @@
                 android:layout_weight="3"
                 android:layout_marginStart="5dp"
                 android:backgroundTint="#1D4FFF"
-                android:text="Hitung"
+                android:text="Hitung Limit"
                 android:textColor="#FFFFFF"
                 android:textSize="14sp"
                 android:textAllCaps="false"

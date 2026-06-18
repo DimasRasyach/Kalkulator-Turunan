@@ -82,9 +82,6 @@ public class TurunanFragment extends Fragment {
         setupButtons();
     }
 
-    // =========================================================
-    // Bind views
-    // =========================================================
     private void bindViews(View view) {
         inputFunction    = view.findViewById(R.id.inputFunction);
         inputFunction.setShowSoftInputOnFocus(false);
@@ -104,9 +101,6 @@ public class TurunanFragment extends Fragment {
         inputFunction.setSingleLine(true);
     }
 
-    // =========================================================
-    // RecyclerView setup
-    // =========================================================
     private void setupRecyclerView() {
         stepAdapter = new StepAdapter();
         rvSteps.setAdapter(stepAdapter);
@@ -165,15 +159,19 @@ public class TurunanFragment extends Fragment {
             btnHideKeyboard.setOnClickListener(v -> hideCustomKeyboard());
         }
 
-        int[]    ids  = {
+        // Menghubungkan ID tombol XML kustom kamu
+        int[] ids = {
                 R.id.btnSin, R.id.btnCos, R.id.btnTan, R.id.btnLn,  R.id.btnLog,
                 R.id.btnSqrt, R.id.btnSquare, R.id.btnPow, R.id.btnPi, R.id.btnE,
-                R.id.btn7, R.id.btn8, R.id.btn9, R.id.btnDivide,
+                R.id.btn7, R.id.btn8, R.id.btn9, R.id.btnDivide, // btnDivide di XML-mu bertuliskan ÷
                 R.id.btn4, R.id.btn5, R.id.btn6, R.id.btnMultiply, R.id.btnCaret,
                 R.id.btn1, R.id.btn2, R.id.btn3, R.id.btnMinus, R.id.btnOpenParen,
                 R.id.btn0, R.id.btnDot, R.id.btnCloseParen, R.id.btnPlus,
                 R.id.btnX
         };
+
+        // DISINI KUNCINYA: R.id.btnDivide (indeks ke-13) diisi dengan "/"
+        // sehingga saat ditekan, karakter yang diketikkan ke EditText langsung berubah jadi "/"
         String[] vals = {
                 "sin(", "cos(", "tan(", "ln(",  "log(",
                 "√(",   "²",    "^",    "π",    "e",
@@ -306,9 +304,6 @@ public class TurunanFragment extends Fragment {
         stepAdapter.submitList(steps);
     }
 
-    // =========================================================
-    // Reset semua ke kondisi awal
-    // =========================================================
     private void resetAll() {
         inputFunction.setText("");
         txtHasil.setText("");
