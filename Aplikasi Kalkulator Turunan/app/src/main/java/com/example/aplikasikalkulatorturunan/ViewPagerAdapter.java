@@ -23,8 +23,8 @@ public class ViewPagerAdapter extends FragmentStateAdapter {
             case 1:
                 return new LimitFragment();
 
-            case 2:
-                return new GrafikFragment();
+//            case 2:
+//                return new GrafikFragment();
 
             default:
                 return new TurunanFragment();
@@ -33,6 +33,6 @@ public class ViewPagerAdapter extends FragmentStateAdapter {
 
     @Override
     public int getItemCount() {
-        return 3;
+        return 2;
     }
 }

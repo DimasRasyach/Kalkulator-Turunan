@@ -15,8 +15,8 @@ public class MainActivity extends AppCompatActivity {
 
     String[] titles = {
             "Biasa",
-            "Limit",
-            "Grafik"
+            "Limit"
+//            "Grafik"
     };
 
     @Override
