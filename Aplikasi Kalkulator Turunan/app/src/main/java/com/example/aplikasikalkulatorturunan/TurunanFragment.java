@@ -205,7 +205,7 @@ public class TurunanFragment extends Fragment {
         Button btnAC = view.findViewById(R.id.btnAC);
         if (btnAC != null) btnAC.setOnClickListener(v -> resetAll());
 
-        btnClear.setOnClickListener(v -> inputFunction.setText(""));
+        btnClear.setOnClickListener(v -> resetAll());
     }
 
     private void appendToInput(String text) {
