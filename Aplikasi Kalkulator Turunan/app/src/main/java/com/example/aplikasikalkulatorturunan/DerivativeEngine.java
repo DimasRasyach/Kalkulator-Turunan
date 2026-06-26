@@ -205,7 +205,8 @@ public class DerivativeEngine {
         ));
 
         Node d = diff(tree);
-        Node simplified = simplify(d);
+        Node expanded = expand(d);
+        Node simplified = simplify(expanded);
 
         steps.add(new Step(
                 "Hasil Akhir",
@@ -461,6 +462,109 @@ public class DerivativeEngine {
         }
     }
 
+    // Gabungkan suku-suku sejenis dalam ekspresi ADD, misal 2x^2 + x^2 → 3x^2
+    private Node combineAddTerms(Node n) {
+        List<Node> terms = new ArrayList<>();
+        collectAddTerms(n, terms);
+
+        // Map: kunci basis term → koefisien total
+        java.util.LinkedHashMap<String, Double> coeffMap = new java.util.LinkedHashMap<>();
+        java.util.Map<String, Node> baseMap = new java.util.HashMap<>();
+        List<Node> nonLikeTerms = new ArrayList<>();
+
+        for (Node t : terms) {
+            // Ekstrak koefisien dan "bentuk" term
+            double coeff = 1.0;
+            Node base = t;
+
+            if (t.isConst()) {
+                // konstanta murni: kunci = "__const__"
+                String key = "__const__";
+                coeffMap.merge(key, t.value, Double::sum);
+                baseMap.putIfAbsent(key, Node.constant(1));
+                continue;
+            }
+            if (t.type == NodeType.NEG && t.left.isConst()) {
+                coeff = -t.left.value;
+                base = Node.constant(1);
+                String key = "__const__";
+                coeffMap.merge(key, coeff, Double::sum);
+                baseMap.putIfAbsent(key, Node.constant(1));
+                continue;
+            }
+            // k * something
+            if (t.type == NodeType.MUL && t.left.isConst()) {
+                coeff = t.left.value;
+                base = t.right;
+            } else if (t.type == NodeType.MUL && t.right.isConst()) {
+                coeff = t.right.value;
+                base = t.left;
+            } else if (t.type == NodeType.NEG) {
+                coeff = -1.0;
+                base = t.left;
+            }
+
+            String key = toStr(base);
+            coeffMap.merge(key, coeff, Double::sum);
+            baseMap.putIfAbsent(key, base);
+        }
+
+        // Rekonstruksi dari map
+        List<Node> resultTerms = new ArrayList<>();
+        for (String key : coeffMap.keySet()) {
+            double c = coeffMap.get(key);
+            if (Math.abs(c) < 1e-12) continue; // suku hilang
+            Node b = baseMap.get(key);
+            Node term;
+            if (key.equals("__const__")) {
+                term = Node.constant(c);
+            } else if (Math.abs(c - 1.0) < 1e-12) {
+                term = b;
+            } else if (Math.abs(c + 1.0) < 1e-12) {
+                term = Node.un(NodeType.NEG, b);
+            } else {
+                term = Node.bin(NodeType.MUL, Node.constant(c), b);
+            }
+            resultTerms.add(term);
+        }
+
+        if (resultTerms.isEmpty()) return Node.constant(0);
+        Node result = resultTerms.get(0);
+        for (int i = 1; i < resultTerms.size(); i++) {
+            Node t = resultTerms.get(i);
+            // Jika koefisiennya negatif, pakai SUB supaya tampilan lebih bersih
+            if (t.type == NodeType.NEG) {
+                result = Node.bin(NodeType.SUB, result, t.left);
+            } else if (t.isConst() && t.value < 0) {
+                result = Node.bin(NodeType.SUB, result, Node.constant(-t.value));
+            } else {
+                result = Node.bin(NodeType.ADD, result, t);
+            }
+        }
+        return result;
+    }
+
+    private void collectAddTerms(Node n, List<Node> out) {
+        if (n.type == NodeType.ADD) {
+            collectAddTerms(n.left, out);
+            collectAddTerms(n.right, out);
+        } else if (n.type == NodeType.SUB) {
+            collectAddTerms(n.left, out);
+            // Sisi kanan SUB → negatifkan
+            out.add(negateTerm(n.right));
+        } else {
+            out.add(n);
+        }
+    }
+
+    private Node negateTerm(Node n) {
+        if (n.isConst()) return Node.constant(-n.value);
+        if (n.type == NodeType.NEG) return n.left;
+        if (n.type == NodeType.MUL && n.left.isConst())
+            return Node.bin(NodeType.MUL, Node.constant(-n.left.value), n.right);
+        return Node.un(NodeType.NEG, n);
+    }
+
     private void addStep(String theorem, String formulaRule, String expression, String explanation) {
         steps.add(new Step(theorem, formulaRule, expression, explanation));
     }
@@ -476,7 +580,8 @@ public class DerivativeEngine {
                 if (l.isZero()) return r;
                 if (r.isZero()) return l;
                 if (l.isConst() && r.isConst()) return Node.constant(l.value + r.value);
-                return Node.bin(NodeType.ADD, l, r);
+                Node combined = combineAddTerms(Node.bin(NodeType.ADD, l, r));
+                return combined;
             }
             case SUB: {
                 Node l = simplify(n.left), r = simplify(n.right);
@@ -515,6 +620,38 @@ public class DerivativeEngine {
         }
     }
 
+    private Node expand(Node n) {
+        if (n == null) return null;
+        switch (n.type) {
+            case MUL: {
+                Node l = expand(n.left);
+                Node r = expand(n.right);
+                // a * (b + c) → ab + ac
+                if (r.type == NodeType.ADD)
+                    return expand(Node.bin(NodeType.ADD,
+                            Node.bin(NodeType.MUL, l, r.left),
+                            Node.bin(NodeType.MUL, l, r.right)));
+                if (r.type == NodeType.SUB)
+                    return expand(Node.bin(NodeType.SUB,
+                            Node.bin(NodeType.MUL, l, r.left),
+                            Node.bin(NodeType.MUL, l, r.right)));
+                // (a + b) * c → ac + bc
+                if (l.type == NodeType.ADD)
+                    return expand(Node.bin(NodeType.ADD,
+                            Node.bin(NodeType.MUL, l.left, r),
+                            Node.bin(NodeType.MUL, l.right, r)));
+                if (l.type == NodeType.SUB)
+                    return expand(Node.bin(NodeType.SUB,
+                            Node.bin(NodeType.MUL, l.left, r),
+                            Node.bin(NodeType.MUL, l.right, r)));
+                return Node.bin(NodeType.MUL, l, r);
+            }
+            case ADD: return Node.bin(NodeType.ADD, expand(n.left), expand(n.right));
+            case SUB: return Node.bin(NodeType.SUB, expand(n.left), expand(n.right));
+            default:  return n;
+        }
+    }
+
     private Node simplifyMul(Node n) {
         List<Node> rawFactors = new ArrayList<>();
         collectMulFactors(n, rawFactors);
@@ -540,23 +677,39 @@ public class DerivativeEngine {
 
         if (coeff == 0) return Node.constant(0);
 
-        Node varFactor = null;
-        List<Node> rest = new ArrayList<>();
+        java.util.LinkedHashMap<String, Double> powerGroups = new java.util.LinkedHashMap<>();
+        java.util.Map<String, Node> baseNodes = new java.util.HashMap<>();
+        List<Node> nonPowerOthers = new ArrayList<>();
+
         for (Node o : others) {
-            if (o.type == NodeType.VAR && varFactor == null) varFactor = o;
-            else rest.add(o);
+            Node base; double exp;
+            if (o.type == NodeType.VAR) {
+                base = o; exp = 1;
+            } else if (o.type == NodeType.POW && o.right.isConst()) {
+                base = o.left; exp = o.right.value;
+            } else {
+                nonPowerOthers.add(o);
+                continue;
+            }
+            String key = toStr(base); // identitas basis
+            powerGroups.merge(key, exp, Double::sum);
+            baseNodes.putIfAbsent(key, base);
+        }
+
+        List<Node> rest = new ArrayList<>(nonPowerOthers);
+        for (String key : powerGroups.keySet()) {
+            double totalExp = powerGroups.get(key);
+            Node base = baseNodes.get(key);
+            if (totalExp == 1) rest.add(base);
+            else rest.add(Node.bin(NodeType.POW, base, Node.constant(totalExp)));
         }
 
         boolean hasCoeff = Math.abs(coeff - 1.0) > 1e-12;
-
-        if (varFactor == null && rest.isEmpty()) return Node.constant(coeff);
+        if (rest.isEmpty()) return Node.constant(coeff);
 
         List<Node> ordered = new ArrayList<>();
         if (hasCoeff) ordered.add(Node.constant(coeff));
-        if (varFactor != null) ordered.add(varFactor);
         ordered.addAll(rest);
-
-        if (ordered.isEmpty()) return Node.constant(coeff);
 
         Node result = ordered.get(0);
         for (int i = 1; i < ordered.size(); i++) {
@@ -584,7 +737,14 @@ public class DerivativeEngine {
             case VAR:   return "x";
             case NEG:   return "-" + wrap(n.left);
             case ADD:   return toStr(n.left) + " + " + toStr(n.right);
-            case SUB:   return toStr(n.left) + " - " + wrapIfAddSub(n.right);
+            case SUB: {
+                String leftStr = toStr(n.left);
+                String rightStr = wrapIfAddSub(n.right);
+                if (rightStr.startsWith("-")) {
+                    return leftStr + " + " + rightStr.substring(1).trim();
+                }
+                return leftStr + " - " + rightStr;
+            }
             case MUL:   return joinMul(n.left, n.right);
             case DIV:   return wrapForDiv(n.left) + "/" + wrapForDiv(n.right);
             case POW:   return wrap(n.left) + "^" + wrap(n.right);
@@ -621,6 +781,27 @@ public class DerivativeEngine {
     }
 
     private String joinMul(Node left, Node right) {
+        // Handle: CONST * NEG(something) → "-coeff * something"
+        if (left.isConst() && right.type == NodeType.NEG) {
+            double newCoeff = -left.value;
+            Node inner = right.left;
+            String coeffStr = fmt(newCoeff);
+            boolean innerIsPureVar = inner.type == NodeType.VAR;
+            boolean innerIsVarPower = inner.type == NodeType.POW && inner.left.type == NodeType.VAR;
+            if (innerIsPureVar || innerIsVarPower) {
+                return coeffStr + wrapForMul(inner); // "-8x" atau "-8x^2"
+            }
+            return coeffStr + "*" + wrapForMul(inner); // "-8*sin(4x)"
+        }
+
+        // Handle: NEG(something) * CONST → "-coeff * something"
+        if (left.type == NodeType.NEG && right.isConst()) {
+            double newCoeff = -right.value;
+            Node inner = left.left;
+            String coeffStr = fmt(newCoeff);
+            return coeffStr + "*" + wrapForMul(inner);
+        }
+
         String l = wrapForMul(left);
         String r = wrapForMul(right);
 
@@ -628,11 +809,9 @@ public class DerivativeEngine {
         boolean rightIsPureVar = right.type == NodeType.VAR;
         boolean rightIsVarPower = right.type == NodeType.POW && right.left.type == NodeType.VAR;
 
-        // Angka diikuti x atau x^n ditulis rapat: 2x, 2x^2, 8x(...) -- TANPA tanda kali
         if (leftIsNumber && (rightIsPureVar || rightIsVarPower)) {
             return l + r;
         }
-        // Angka diikuti angka, atau angka diikuti hal lain yang bukan x/x^n -> perlu '*'
         if (leftIsNumber || right.isConst()) {
             return l + "*" + r;
         }
