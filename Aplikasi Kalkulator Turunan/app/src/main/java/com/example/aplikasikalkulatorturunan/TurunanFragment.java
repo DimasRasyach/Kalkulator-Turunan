@@ -332,7 +332,7 @@ public class TurunanFragment extends Fragment {
         lineChart.setScaleEnabled(true);
         lineChart.setPinchZoom(true);
         lineChart.getLegend().setEnabled(false);
-        lineChart.setNoDataText("Masukkan fungsi lalu tekan Hitung Turunan");
+        lineChart.setNoDataText("Tidak Ada Grafik");
 
         XAxis xAxis = lineChart.getXAxis();
         xAxis.setPosition(XAxis.XAxisPosition.BOTTOM);

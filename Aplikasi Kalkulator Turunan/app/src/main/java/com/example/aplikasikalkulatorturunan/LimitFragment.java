@@ -87,15 +87,41 @@ public class LimitFragment extends Fragment {
         btnClear.setOnClickListener(v -> resetAll());
     }
 
+    private String autoWrapFraction(String fx) {
+        // Cari '/' yang berada di luar kurung
+        int depth = 0;
+        int slashIdx = -1;
+
+        for (int i = 0; i < fx.length(); i++) {
+            char c = fx.charAt(i);
+            if (c == '(') depth++;
+            else if (c == ')') depth--;
+            else if (c == '/' && depth == 0) {
+                slashIdx = i;
+                break;
+            }
+        }
+
+        // Kalau tidak ada '/' di luar kurung, kembalikan apa adanya
+        if (slashIdx == -1) return fx;
+
+        String left  = fx.substring(0, slashIdx).trim();
+        String right = fx.substring(slashIdx + 1).trim();
+
+        return "(" + left + ")/(" + right + ")";
+    }
+
     private void prosesHitungCerdas() {
         String fx = inputFunction.getText().toString().trim();
         String aVal = inputLimitValue.getText().toString().trim();
         if (fx.isEmpty()) return;
 
+        fx = autoWrapFraction(fx);
+
         if (TextUtils.isEmpty(aVal)) {
             hitungLimitTurunan(fx);       // x→a kosong → turunan fungsi f'(x)
         } else {
-            hitungTurunanDiTitik(fx, aVal); // x→a diisi → turunkan dulu, baru substitusi
+            hitungLimitAljabar(fx, aVal); // x→a diisi → turunkan dulu, baru substitusi
         }
         hideCustomKeyboard();
     }
@@ -173,7 +199,7 @@ public class LimitFragment extends Fragment {
             List<Stepmodel> steps = new ArrayList<>();
             boolean isIndeterminate = false;
 
-            if (Double.isNaN(yDirect) || Double.isInfinite(yDirect) || (Math.abs(yDirect) < 1e-6 && fx.contains("/"))) {
+            if (Double.isNaN(yDirect) || Double.isInfinite(yDirect)) {
                 isIndeterminate = true;
                 double lim = (evalDenganX(fNorm, a + 0.0001) + evalDenganX(fNorm, a - 0.0001)) / 2.0;
                 hasil = formatHasil(lim);

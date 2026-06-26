@@ -146,7 +146,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="16dp"
-                android:text="Hasil Limit Turunan"
+                android:text="Hasil Limit"
                 android:textStyle="bold"
                 android:textSize="15sp"
                 android:textColor="#111827"/>
