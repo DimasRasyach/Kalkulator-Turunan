@@ -207,7 +207,15 @@ public class LimitFragment extends Fragment {
                     steps.add(new Stepmodel(1, "Bentuk Akar",    "0/0 → Kalikan Sekawan",         "Substitusi langsung menghasilkan 0/0. Gunakan metode rasionalisasi."));
                     steps.add(new Stepmodel(2, "Rasionalisasi",  "f(x)·sekawan / g(x)·sekawan",   "Kalikan pembilang & penyebut dengan akar sekawan."));
                     steps.add(new Stepmodel(3, "Hasil Limit",    "lim x→"+aStr+" = "+hasil,       "Sederhanakan dan masukkan x="+aStr+"."));
-                } else {
+                }
+
+                else if (fx.toLowerCase().contains("sin") || fx.toLowerCase().contains("cos") || fx.toLowerCase().contains("tan")) {
+                    steps.add(new Stepmodel(1, "Trigonometri",   "0/0 → Sifat Trigonometri",      "Substitusi langsung menghasilkan 0/0 pada fungsi trigonometri."));
+                    steps.add(new Stepmodel(2, "Identitas Limit", "lim x→0 tan(x)/x = 1",          "Gunakan sifat dasar limit trigonometri atau aturan L'Hôpital."));
+                    steps.add(new Stepmodel(3, "Hasil Limit",    "lim x→"+aStr+" = "+hasil,       "Dapatkan hasil limit "+hasil+"."));
+                }
+
+                else {
                     steps.add(new Stepmodel(1, "Bentuk Pangkat", "0/0 → Faktorkan",               "Substitusi langsung menghasilkan 0/0. Faktorkan untuk mengeliminasi nol."));
                     steps.add(new Stepmodel(2, "Faktorisasi",    "lim H(x)/P(x) → coret (x−a)",   "Faktorkan pembilang/penyebut untuk mencoret faktor nol."));
                     steps.add(new Stepmodel(3, "Hasil Limit",    "lim x→"+aStr+" = "+hasil,       "Dapatkan hasil limit "+hasil+"."));
